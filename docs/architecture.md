@@ -833,6 +833,163 @@ CREATE TABLE IF NOT EXISTS embeddings (
    부팅 한 방으로 10ms 안에 필요한 경험이 다 떠오른다."
 ```
 
+### 8-8. 레이어 교집합 — fp2 원리 적용 (2026-03-23 설계 토론)
+
+> **fp2 원리**: "전체 모델을 올리지 않고, 필요한 레이어만 꺼낸다"
+> **Mímir 적용**: "전체 경험을 주입하지 않고, 교집합에 걸리는 경험만 꺼낸다"
+
+```
+요청: "제과점 랜딩페이지 만들어줘"
+
+Step 1: 복합 질의 분해
+  "제과점 랜딩페이지" → ["랜딩페이지", "제과점"]
+
+Step 2: 레이어별 recall
+  Layer A: "랜딩페이지" → 경험 200건 (hero, CTA, 갤러리, 가격표...)
+  Layer B: "제과점"     → 경험 0건 (신규)
+
+Step 3: 교집합 검색 (A ∩ B)
+  200건 중 "식품/요식업/베이커리" 태그 있는 것 → 3건
+  없으면 유사 태그 확장 (카페, 레스토랑, 디저트) → 8건
+
+Step 4: 결과 기반 분기
+  ├─ 교집합 있음 → "이전에 카페 랜딩 만든 적 있어요. 비슷하게?"
+  ├─ 교집합 없음 → "제과점 스타일은 처음이에요. 어떤 분위기?"
+  └─ 유형이 많음 → "hero 중심? 갤러리형? 예약형?"
+
+Step 5: 세션 종료 시 델타 학습
+  기존 DB: [a, b, c] (각 frequency: 5, 5, 3)
+  이번 세션: [a, b, d]
+  → a.frequency++ (6), b.frequency++ (6)
+  → c: 이번에 안 쓰임 (frequency 유지, 시간 감쇠 적용)
+  → d: 신규 INSERT (제과점 관련 새 경험)
+  → 다음에 "제과점" 검색하면 경험 1건 이상 존재
+
+★ 쓸수록 빈 레이어가 채워진다 = 일을 시킬수록 더 잘하는 구조
+★ 이것이 학습이고, 경험치다
+★ 이게 구현되면 반성문 같은 것은 필요 없다 — 시스템이 알아서 배우니까
+```
+
+```
+TagChain 레이어 교차 SQL:
+
+  -- Layer A ∩ Layer B 교집합
+  SELECT DISTINCT e.* FROM experiences e
+  JOIN tags t1 ON t1.experience_id = e.id AND t1.tag = '랜딩페이지'
+  JOIN tags t2 ON t2.experience_id = e.id AND t2.tag IN ('제과점', '베이커리', '카페', '요식업')
+  ORDER BY e.created_at DESC
+  LIMIT 20;
+
+  -- 유사 태그 확장 (교집합 0건일 때)
+  SELECT DISTINCT e.* FROM experiences e
+  JOIN tags t1 ON t1.experience_id = e.id AND t1.tag = '랜딩페이지'
+  JOIN tags t2 ON t2.experience_id = e.id 
+    AND t2.tag IN (
+      SELECT tag FROM tags WHERE level = (
+        SELECT level FROM tags WHERE tag = '제과점' LIMIT 1
+      )
+      ORDER BY tag  -- 같은 레벨의 유사 태그들
+    )
+  ORDER BY e.created_at DESC
+  LIMIT 20;
+```
+
+### 8-9. 질문 시퀀스 — 경험 유무에 따른 행동 분기
+
+```
+recall 결과에 따라 AI의 행동 패턴 자체를 바꾸는 구조:
+
+경험 0건 (첫 경험):
+  overlay 주입: "⚡ 이 주제는 처음입니다. 사용자에게 구체적으로 질문하세요."
+  AI 행동: "어떤 음악 만들어 드릴까요?"
+
+경험 있지만 모호 (여러 유형 존재):
+  overlay 주입: "⚡ 과거 선호: 발라드(3회), 팝(1회). 확인 후 진행하세요."
+  AI 행동: "이번에도 발라드로 만들어 드릴까요?"
+
+경험 명확 (패턴 확실):
+  overlay 주입: "⚡ 기본값: 발라드, BPM 120, 피아노. 바로 진행 가능."
+  AI 행동: 바로 실행 (단, 확인 한마디는 추가)
+
+"늘 만들던거" 입력 시:
+  → frequency 기준 상위 패턴 자동 적용
+  → 사용자가 말 안 해도 알아서 하는 수준
+```
+
+### 8-10. Rust 강제 주입 — 왜 Rust인가
+
+```
+★ 핵심: AI가 "무시"할 수 없게 만드는 것
+
+TypeScript 통찰 주입:
+  → AI의 컨텍스트에 텍스트로 들어감
+  → AI가 읽고도 무시할 수 있음 (= "알겠습니다" 무한루프)
+
+Rust napi-rs 강제 주입:
+  → 네이티브 바이너리가 프롬프트에 물리적으로 박아넣음
+  → AI가 선택할 여지 없음 — 이미 프롬프트의 일부
+
+Ark  = "차단"을 강제 (하지 말아야 할 것)
+Mímir = "주입"을 강제 (알아야 할 것)
+둘 다 Rust인 이유 = AI의 자유의지를 시스템 레벨에서 제어
+
+또한:
+  - Rust SQLite (rusqlite) → Node.js better-sqlite3 대비 ~2x 빠른 I/O
+  - SIMD 벡터 연산 → 임베딩 cosine similarity 고속 처리
+  - 메모리 안전 → 장기 운영 DB에 크래시 없음
+  - prebuilt binary → 사용자가 Rust 설치 안 해도 npm install만으로 동작
+```
+
+---
+
+### 구현 가능성 분석 — 시니어 관점 (2026-03-23)
+
+> 위 설계가 현실적으로/물리적으로/기술적으로 구현 가능한가?
+
+```
+1. 레이어 교집합 SQL — ✅ 구현 가능 (난이도: 낮음)
+   - SQLite JOIN 2번이면 끝. 인덱스만 잘 걸면 ~5ms
+   - 이미 tags 테이블 + findExperiencesByTags 존재
+   - 추가 작업: AND 조건 다중 태그 검색 함수 1개
+   - 기술적 리스크: 없음
+
+2. 유사 태그 확장 — ⚠️ 구현 가능 (난이도: 중간)
+   - 같은 level의 태그 자동 확장은 SQL로 가능
+   - "의미적 유사" (제과점 ≈ 카페)는 태그 계층 사전이 필요
+   - 선택지 A: 수동 태그 사전 (매핑 테이블)
+   - 선택지 B: Ollama 임베딩으로 태그 간 cosine similarity
+   - 기술적 리스크: 사전 없으면 확장 정확도 떨어짐 → Phase 3에서 LLM 보완
+
+3. 복합 질의 분해 — ✅ 구현 가능 (난이도: 낮음)
+   - classifier.ts에 이미 키워드 추출 존재
+   - extractSearchTerms() 결과를 레이어로 분리하면 끝
+   - 기술적 리스크: 없음
+
+4. 질문 시퀀스 (경험 유무 분기) — ✅ 구현 가능 (난이도: 낮음)
+   - recall 결과 count로 분기. overlay 텍스트만 바꾸면 됨
+   - 기술적 리스크: 없음
+
+5. 델타 학습 (frequency 업데이트) — ✅ 구현 가능 (난이도: 낮음)
+   - SQL UPSERT 패턴 (INSERT OR UPDATE)
+   - 유사 경험 감지: context+action 해시 비교 또는 FTS5 매칭
+   - 기술적 리스크: 유사도 임계값 튜닝 필요
+
+6. Rust 강제 주입 — ✅ 이미 구현됨 (난이도: 완료)
+   - napi-rs 바인딩 + database.ts 하이브리드 이미 존재
+   - 추가 작업: activate()에서 Rust 함수 직접 호출만 연결
+   - 기술적 리스크: 없음
+
+7. 10만 건 경험 성능 — ✅ 문제 없음
+   - SQLite는 수백만 행도 밀리초 검색 (인덱스 기준)
+   - FTS5는 10만 건에서도 ~5ms 이내
+   - 벤치마크: better-sqlite3 기준 100만 행 SELECT ~3ms
+   - 기술적 리스크: 없음
+
+결론: 전부 구현 가능. 핵심 난관은 "유사 태그 확장"뿐이고,
+      이것도 수동 매핑으로 Phase 1 해결 → Phase 3에서 LLM 보완.
+      나머지는 기존 코드에 함수 1-2개 추가 수준.
+```
+
 ---
 
 ## 9. 구현 로드맵
@@ -1018,11 +1175,16 @@ n2-mimir/
 
 ---
 
-> **이 기획서는 v0.2입니다. 주인님 피드백 반영 완료:**
+> **이 기획서는 v0.3입니다. 주인님 피드백 반영 완료:**
 > - ✅ 핵심 미션: "Soul은 기억한다. Mímir는 배운다."
 > - ✅ SQL 오케스트레이터 (연쇄 검색 ~10ms)
 > - ✅ Ollama 선택사항 (Graceful Degradation)
 > - ✅ 부팅해도 모든 경험치 영구 보존
 > - ✅ TypeScript + Rust 하이브리드
 > - ✅ autoStudy 패턴 분석 완료 (5가지 활용)
+> - ✅ 레이어 교집합 (fp2 원리) — 복합 질의 분해 + 교차 검색
+> - ✅ 질문 시퀀스 — 경험 유무에 따른 행동 분기
+> - ✅ 델타 학습 — 새로운 부분만 학습
+> - ✅ Rust 강제 주입 — AI 자유의지 시스템 제어
+> - ✅ 구현 가능성 분석 — 시니어 관점 기술 검증 완료
 
