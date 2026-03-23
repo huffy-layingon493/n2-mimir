@@ -1,20 +1,108 @@
-# n2-Mímir (미미르)
+# n2-mimir
 
-> **AI 에이전트 학습 엔진** — 경험에서 배우고, 행동을 바꾸는 시스템
+> **AI Experience Learning Engine** — learns from experience, changes behavior
 
-## 네이밍 유래
-- **Mímir (미미르)**: 북유럽 신화에서 지혜의 샘을 지키는 존재
-- 오딘이 한쪽 눈을 바쳐 지혜를 얻었듯, AI도 경험이라는 대가를 치르고 학습한다
+## What is Mimir?
 
-## 프로젝트 목적
-현재 N2 에이전트들은 기억(Soul KV, Ledger, Brain)은 있지만 **학습이 없다**.
-같은 실수를 매 세션 반복하며, 영원히 Day 1 상태에 머문다.
+AI agents remember, but they don't learn. They make the same mistakes every session.
 
-Mímir는 이 무한루프를 깨는 **학습 엔진**이다:
+Mimir breaks this loop:
 ```
-경험(Ledger) → [Mímir: 분석/패턴추출/규칙생성] → 행동 강제(Clotho/Ark)
+Experience → [Analyze → Extract Patterns → Generate Insights] → Behavior Change
 ```
 
-## 현재 상태
-- 📋 연구 자료 수집 단계
-- 🔬 학술 논문 + 기술 자료 분석 중
+**Named after** the Norse guardian of wisdom. Odin sacrificed an eye for knowledge — AI pays with experience.
+
+## Architecture
+
+```
+┌─────────────────────────────────────┐
+│            n2-mimir                 │
+├──────────┬──────────────────────────┤
+│ Rust Core│  TypeScript Brain        │
+│ (napi-rs)│                          │
+│          │  collector/ → normalizer │
+│ SQLite   │  analyzer/  → patterns   │
+│ FTS5     │  insight/   → generator  │
+│ Vector   │  converter/ → overlay    │
+│          │  tracker/   → scoring    │
+│          │  orchestrator/ → recall  │
+└──────────┴──────────────────────────┘
+```
+
+- **Rust Core**: SQLite, FTS5 full-text search, SIMD vector ops (performance)
+- **TS Brain**: Pattern analysis, insight generation, token-budgeted overlay
+
+## Token Cost
+
+| Phase | LLM Tokens | Notes |
+|-------|-----------|-------|
+| ACTIVATE (boot) | ~500 | Overlay injection only. DB queries are free (local SQLite) |
+| DIGEST (end) | 0 | Phase 1-2: template-based, no LLM needed |
+| DIGEST + LLM | ~1000-2000 | Phase 3: optional LLM analysis via local Ollama or cloud |
+
+**All DB operations (search, tag, vote, score) = 0 tokens.** Runs entirely on local SQLite.
+
+**Search engine**: SQLite FTS5 with **BM25 ranking** (built-in, no external service). Optional local LLM (Ollama) or cloud for deeper analysis.
+
+## Roadmap
+
+### Phase 1 — Standalone Package (Priority)
+> `npm install n2-mimir` — works without any external dependencies
+
+- [x] SQLite + FTS5 experience storage
+- [x] Keyword-based pattern detection (KR/EN)
+- [x] Cascading recall (FTS5 → Tags → Category → Project)
+- [x] Token-budgeted overlay assembly (70/30 split)
+- [x] Insight voting + graduation system
+- [x] Effect tracking + scoring
+- [x] 83 unit tests passing
+- [ ] Rust core build (napi-rs)
+- [ ] npm publish
+
+### Phase 2 — N2 Soul Integration (Synergy)
+> Connect to Soul ecosystem for maximum effect
+
+- [ ] `activate()` — inject insights at `n2_boot`
+- [ ] `digest()` — collect experiences at `n2_work_end`
+- [ ] Ledger adapter — auto-collect from Soul Ledger
+- [ ] Ark integration — graduated insights → blocking rules
+- [ ] Clotho integration — insights → auto-generated workflows
+
+### Phase 3 — LLM Analysis
+- [ ] Ollama / Cloud LLM for deeper pattern analysis
+- [ ] Contrast pair analysis (ExpeL method)
+- [ ] Procedural memory generation
+
+## Install
+
+```bash
+npm install n2-mimir
+```
+
+## Quick Start
+
+```typescript
+import { Mimir } from 'n2-mimir';
+
+const mimir = new Mimir({ dbPath: './mimir.db' });
+
+// Add experience
+mimir.addExperience({
+  agent: 'rose',
+  project: 'my-project',
+  action: 'Used special character in directory name',
+  outcome: 'Terminal commands all hung',
+  correction: 'Use only [a-z0-9-] for directory names',
+});
+
+// Recall (cascading search)
+const result = mimir.recall('directory naming');
+
+// Get overlay for prompt injection
+const overlay = mimir.overlay('directory naming', { tokenBudget: 500 });
+```
+
+## License
+
+MIT
