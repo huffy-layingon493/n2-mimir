@@ -1,0 +1,40 @@
+# n2-mimir-core — Rust core engine for n2-Mímir experience system
+[package]
+name = "n2-mimir-core"
+version = "0.1.0"
+edition = "2021"
+description = "High-performance experience engine core: SQLite, FTS5, SIMD vector ops"
+license = "MIT"
+authors = ["N2 Project"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# napi-rs: Rust → Node.js native addon
+napi = { version = "2", default-features = false, features = ["napi8", "serde-json"] }
+napi-derive = "2"
+
+# SQLite: zero-copy, embedded database
+rusqlite = { version = "0.31", features = ["bundled", "fts5", "blob"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# UUID generation
+uuid = { version = "1", features = ["v4"] }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Thread-safe global state
+lazy_static = "1.4"
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+opt-level = 3
+strip = true

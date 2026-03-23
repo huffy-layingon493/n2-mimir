@@ -1,14 +1,19 @@
-// SQLite database wrapper — better-sqlite3 based, standalone mode
+// MimirDatabase — Rust-first, better-sqlite3 fallback
+// Architecture: Rust core handles all I/O via napi-rs bindings.
+// If native module unavailable, falls back to better-sqlite3 (TS).
+
 import type {
   ExperienceEntry, ExperienceInput, ExperienceFilter,
   Insight, InsightInput, InsightFilter,
   TagChain, TagFrequency, RankedExperience,
   EffectMeasurement,
 } from '../types.js';
-import type BetterSqlite3 from 'better-sqlite3';
+import { getNativeBinding } from './native.js';
+import type { NativeBinding } from './native.js';
 import { SCHEMA_SQL } from './schema.js';
 import { runMigrations } from './migrations.js';
 import { createRequire } from 'module';
+import type BetterSqlite3 from 'better-sqlite3';
 
 /** Generate a UUID v4 */
 function uuid(): string {
@@ -25,76 +30,235 @@ function estimateTokens(text: string): number {
 }
 
 /**
- * MimirDatabase — core SQLite wrapper for all Mímir data operations.
- * Standalone mode: no Soul, no external dependencies beyond better-sqlite3.
+ * MimirDatabase — hybrid Rust/TS database wrapper.
  *
- * NOTE: better-sqlite3 must be installed by the consumer.
- * It is listed as a peerDependency in package.json.
+ * Strategy:
+ * - If Rust native module is available → delegates all operations to Rust (rusqlite)
+ * - If not → falls back to better-sqlite3 (TypeScript)
+ *
+ * This ensures the package works even without compiled Rust bindings,
+ * while providing maximum performance when they're available.
  */
 export class MimirDatabase {
-  private readonly db: BetterSqlite3.Database;
+  private readonly native: NativeBinding | null;
+  private readonly nativeHandle: number | null;
+  private readonly fallbackDb: BetterSqlite3.Database | null;
+  private readonly mode: 'rust' | 'fallback';
 
   constructor(dbPath: string) {
-    // Dynamic import for better-sqlite3 (native CJS module in ESM context)
-    const esmRequire = createRequire(import.meta.url);
-    const Database = esmRequire('better-sqlite3') as typeof BetterSqlite3;
-    this.db = new Database(dbPath);
-    this.db.pragma('journal_mode = WAL');
-    this.db.pragma('foreign_keys = ON');
-    this.initialize();
+    this.native = getNativeBinding();
+
+    if (this.native) {
+      // Rust mode: all I/O through native bindings
+      this.nativeHandle = this.native.openDatabase(dbPath);
+      this.fallbackDb = null;
+      this.mode = 'rust';
+    } else {
+      // Fallback mode: better-sqlite3
+      this.nativeHandle = null;
+      const esmRequire = createRequire(import.meta.url);
+      const Database = esmRequire('better-sqlite3') as typeof BetterSqlite3;
+      this.fallbackDb = new Database(dbPath);
+      this.fallbackDb.pragma('journal_mode = WAL');
+      this.fallbackDb.pragma('foreign_keys = ON');
+      this.initializeFallback();
+      this.mode = 'fallback';
+    }
   }
 
-  /** Initialize schema and run pending migrations */
-  private initialize(): void {
-    this.db.exec(SCHEMA_SQL);
-    this.db.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);');
-    runMigrations(this.db);
+  /** Get current engine mode */
+  getMode(): 'rust' | 'fallback' {
+    return this.mode;
+  }
+
+  /** Initialize fallback schema */
+  private initializeFallback(): void {
+    if (!this.fallbackDb) return;
+    this.fallbackDb.exec(SCHEMA_SQL);
+    this.fallbackDb.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);');
+    runMigrations(this.fallbackDb);
   }
 
   // === Experience CRUD ===
 
-  /** Insert a new experience */
   insertExperience(input: ExperienceInput): ExperienceEntry {
+    if (this.native && this.nativeHandle !== null) {
+      const id = this.native.insertExperience(this.nativeHandle, JSON.stringify(input));
+      const json = this.native.getExperience(this.nativeHandle, id);
+      return JSON.parse(json) as ExperienceEntry;
+    }
+    return this.insertExperienceFallback(input);
+  }
+
+  getExperience(id: string): ExperienceEntry | undefined {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.getExperience(this.nativeHandle, id);
+      return json ? JSON.parse(json) as ExperienceEntry : undefined;
+    }
+    return this.getExperienceFallback(id);
+  }
+
+  queryExperiences(filter: ExperienceFilter): ExperienceEntry[] {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.queryExperiences(this.nativeHandle, JSON.stringify(filter));
+      return JSON.parse(json) as ExperienceEntry[];
+    }
+    return this.queryExperiencesFallback(filter);
+  }
+
+  // === FTS5 Search ===
+
+  searchExperiences(query: string, limit = 20): RankedExperience[] {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.searchExperiences(this.nativeHandle, query, limit);
+      return JSON.parse(json) as RankedExperience[];
+    }
+    return this.searchExperiencesFallback(query, limit);
+  }
+
+  // === Insight CRUD ===
+
+  insertInsight(input: InsightInput): Insight {
+    if (this.native && this.nativeHandle !== null) {
+      const id = this.native.insertInsight(this.nativeHandle, JSON.stringify(input));
+      const json = this.native.getInsight(this.nativeHandle, id);
+      return JSON.parse(json) as Insight;
+    }
+    return this.insertInsightFallback(input);
+  }
+
+  getInsight(id: string): Insight | undefined {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.getInsight(this.nativeHandle, id);
+      return json ? JSON.parse(json) as Insight : undefined;
+    }
+    return this.getInsightFallback(id);
+  }
+
+  queryInsights(filter: InsightFilter): Insight[] {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.queryInsights(this.nativeHandle, JSON.stringify(filter));
+      return JSON.parse(json) as Insight[];
+    }
+    return this.queryInsightsFallback(filter);
+  }
+
+  // === Voting ===
+
+  upvoteInsight(id: string): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.upvoteInsight(this.nativeHandle, id);
+      return;
+    }
+    this.upvoteInsightFallback(id);
+  }
+
+  downvoteInsight(id: string): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.downvoteInsight(this.nativeHandle, id);
+      return;
+    }
+    this.downvoteInsightFallback(id);
+  }
+
+  graduateInsight(id: string, convertedType: string, convertedRef: string): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.graduateInsight(this.nativeHandle, id, convertedType, convertedRef);
+      return;
+    }
+    this.graduateInsightFallback(id, convertedType, convertedRef);
+  }
+
+  // === Tags ===
+
+  setTags(experienceId: string, tags: ReadonlyArray<TagChain>): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.setTags(this.nativeHandle, experienceId, JSON.stringify(tags));
+      return;
+    }
+    this.setTagsFallback(experienceId, tags);
+  }
+
+  getTagFrequencies(tags: ReadonlyArray<string>, limit = 50): TagFrequency[] {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.getTagFrequencies(this.nativeHandle, JSON.stringify(tags), limit);
+      return JSON.parse(json) as TagFrequency[];
+    }
+    return this.getTagFrequenciesFallback(tags, limit);
+  }
+
+  findExperiencesByTags(tags: ReadonlyArray<string>, limit = 20): ExperienceEntry[] {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.findExperiencesByTags(this.nativeHandle, JSON.stringify(tags), limit);
+      return JSON.parse(json) as ExperienceEntry[];
+    }
+    return this.findExperiencesByTagsFallback(tags, limit);
+  }
+
+  // === Effect tracking ===
+
+  recordEffect(measurement: EffectMeasurement): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.recordEffect(this.nativeHandle, JSON.stringify(measurement));
+      return;
+    }
+    this.recordEffectFallback(measurement);
+  }
+
+  // === Utility ===
+
+  getStats(): { experiences: number; insights: number; tags: number } {
+    if (this.native && this.nativeHandle !== null) {
+      return JSON.parse(this.native.getStats(this.nativeHandle));
+    }
+    return this.getStatsFallback();
+  }
+
+  close(): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.closeDatabase(this.nativeHandle);
+    } else if (this.fallbackDb) {
+      this.fallbackDb.close();
+    }
+  }
+
+  // ================================================
+  // === Fallback implementations (better-sqlite3) ===
+  // ================================================
+
+  private get db(): BetterSqlite3.Database {
+    if (!this.fallbackDb) throw new Error('Fallback DB not initialized');
+    return this.fallbackDb;
+  }
+
+  private insertExperienceFallback(input: ExperienceInput): ExperienceEntry {
     const id = uuid();
     const now = new Date().toISOString();
     const tokenCost = estimateTokens(
       `${input.context} ${input.action} ${input.outcome} ${input.correction ?? ''}`
     );
 
-    const stmt = this.db.prepare(`
+    this.db.prepare(`
       INSERT INTO experiences (id, session_id, agent, project, type, category, severity,
         context, action, outcome, correction, source_ref, frequency, token_cost, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `);
-
-    stmt.run(
-      id,
-      input.sessionId ?? '',
-      input.agent,
-      input.project,
-      input.type,
-      input.category,
-      input.severity ?? 'info',
-      input.context,
-      input.action,
-      input.outcome,
-      input.correction ?? null,
-      input.sourceRef ?? null,
-      tokenCost,
-      now,
+    `).run(
+      id, input.sessionId ?? '', input.agent, input.project,
+      input.type, input.category, input.severity ?? 'info',
+      input.context, input.action, input.outcome,
+      input.correction ?? null, input.sourceRef ?? null,
+      tokenCost, now,
     );
 
-    return this.getExperience(id)!;
+    return this.getExperienceFallback(id)!;
   }
 
-  /** Get experience by ID */
-  getExperience(id: string): ExperienceEntry | undefined {
+  private getExperienceFallback(id: string): ExperienceEntry | undefined {
     const row = this.db.prepare('SELECT * FROM experiences WHERE id = ?').get(id) as Record<string, unknown> | undefined;
     return row ? this.mapExperience(row) : undefined;
   }
 
-  /** Query experiences with filter */
-  queryExperiences(filter: ExperienceFilter): ExperienceEntry[] {
+  private queryExperiencesFallback(filter: ExperienceFilter): ExperienceEntry[] {
     const conditions: string[] = ['1=1'];
     const params: unknown[] = [];
 
@@ -113,10 +277,7 @@ export class MimirDatabase {
     return rows.map((r) => this.mapExperience(r));
   }
 
-  // === FTS5 Search ===
-
-  /** Full-text search on experiences (BM25 ranking) */
-  searchExperiences(query: string, limit = 20): RankedExperience[] {
+  private searchExperiencesFallback(query: string, limit: number): RankedExperience[] {
     const sql = `
       SELECT e.*, rank
       FROM experiences_fts fts
@@ -132,10 +293,7 @@ export class MimirDatabase {
     }));
   }
 
-  // === Insight CRUD ===
-
-  /** Insert a new insight */
-  insertInsight(input: InsightInput): Insight {
+  private insertInsightFallback(input: InsightInput): Insight {
     const id = uuid();
     const now = new Date().toISOString();
     const tokenCost = input.tokenCost ?? estimateTokens(input.compressed || input.description);
@@ -146,17 +304,15 @@ export class MimirDatabase {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 2, 0.5, 0.0, 'active')
     `).run(id, now, now, input.agent, input.description, input.compressed, tokenCost, input.category, input.scope ?? 'project');
 
-    return this.getInsight(id)!;
+    return this.getInsightFallback(id)!;
   }
 
-  /** Get insight by ID */
-  getInsight(id: string): Insight | undefined {
+  private getInsightFallback(id: string): Insight | undefined {
     const row = this.db.prepare('SELECT * FROM insights WHERE id = ?').get(id) as Record<string, unknown> | undefined;
     return row ? this.mapInsight(row) : undefined;
   }
 
-  /** Query insights with filter */
-  queryInsights(filter: InsightFilter): Insight[] {
+  private queryInsightsFallback(filter: InsightFilter): Insight[] {
     const conditions: string[] = ['1=1'];
     const params: unknown[] = [];
 
@@ -174,41 +330,27 @@ export class MimirDatabase {
     return rows.map((r) => this.mapInsight(r));
   }
 
-  // === Voting ===
-
-  /** UPVOTE: increase insight importance */
-  upvoteInsight(id: string): void {
-    this.db.prepare(`
-      UPDATE insights SET importance = importance + 1, updated_at = datetime('now') WHERE id = ?
-    `).run(id);
+  private upvoteInsightFallback(id: string): void {
+    this.db.prepare(
+      "UPDATE insights SET importance = importance + 1, updated_at = datetime('now') WHERE id = ?"
+    ).run(id);
   }
 
-  /** DOWNVOTE: decrease insight importance, retire if 0 */
-  downvoteInsight(id: string): void {
-    this.db.prepare(`
-      UPDATE insights SET
-        importance = MAX(0, importance - 1),
-        status = CASE WHEN importance <= 1 THEN 'retired' ELSE status END,
-        updated_at = datetime('now')
-      WHERE id = ?
-    `).run(id);
+  private downvoteInsightFallback(id: string): void {
+    this.db.prepare(
+      "UPDATE insights SET importance = MAX(0, importance - 1), status = CASE WHEN importance <= 1 THEN 'retired' ELSE status END, updated_at = datetime('now') WHERE id = ?"
+    ).run(id);
   }
 
-  /** Graduate insight (importance >= 5, effectScore >= 0.8) */
-  graduateInsight(id: string, convertedType: string, convertedRef: string): void {
-    this.db.prepare(`
-      UPDATE insights SET status = 'graduated', converted_type = ?, converted_ref = ?, updated_at = datetime('now')
-      WHERE id = ?
-    `).run(convertedType, convertedRef, id);
+  private graduateInsightFallback(id: string, convertedType: string, convertedRef: string): void {
+    this.db.prepare(
+      "UPDATE insights SET status = 'graduated', converted_type = ?, converted_ref = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(convertedType, convertedRef, id);
   }
 
-  // === Tags ===
-
-  /** Set tags for an experience (replaces existing) */
-  setTags(experienceId: string, tags: ReadonlyArray<TagChain>): void {
+  private setTagsFallback(experienceId: string, tags: ReadonlyArray<TagChain>): void {
     const del = this.db.prepare('DELETE FROM tags WHERE experience_id = ?');
     const ins = this.db.prepare('INSERT INTO tags (experience_id, level, tag) VALUES (?, ?, ?)');
-
     this.db.transaction(() => {
       del.run(experienceId);
       for (const t of tags) {
@@ -217,90 +359,56 @@ export class MimirDatabase {
     })();
   }
 
-  /** Get tag frequencies for cascading recall */
-  getTagFrequencies(tags: ReadonlyArray<string>, limit = 50): TagFrequency[] {
+  private getTagFrequenciesFallback(tags: ReadonlyArray<string>, limit: number): TagFrequency[] {
     if (tags.length === 0) return [];
     const placeholders = tags.map(() => '?').join(',');
-    const sql = `
-      SELECT level, tag, COUNT(*) as frequency
-      FROM tags WHERE tag IN (${placeholders})
-      GROUP BY level, tag
-      ORDER BY frequency DESC
-      LIMIT ?
-    `;
+    const sql = `SELECT level, tag, COUNT(*) as frequency FROM tags WHERE tag IN (${placeholders}) GROUP BY level, tag ORDER BY frequency DESC LIMIT ?`;
     return this.db.prepare(sql).all(...tags, limit) as TagFrequency[];
   }
 
-  /** Find experiences by tags (cascading recall) */
-  findExperiencesByTags(tags: ReadonlyArray<string>, limit = 20): ExperienceEntry[] {
+  private findExperiencesByTagsFallback(tags: ReadonlyArray<string>, limit: number): ExperienceEntry[] {
     if (tags.length === 0) return [];
     const placeholders = tags.map(() => '?').join(',');
-    const sql = `
-      SELECT DISTINCT e.* FROM experiences e
-      JOIN tags t ON t.experience_id = e.id
-      WHERE t.tag IN (${placeholders})
-      ORDER BY e.created_at DESC
-      LIMIT ?
-    `;
+    const sql = `SELECT DISTINCT e.* FROM experiences e JOIN tags t ON t.experience_id = e.id WHERE t.tag IN (${placeholders}) ORDER BY e.created_at DESC LIMIT ?`;
     const rows = this.db.prepare(sql).all(...tags, limit) as Record<string, unknown>[];
     return rows.map((r) => this.mapExperience(r));
   }
 
-  // === Effect tracking ===
-
-  /** Record effect measurement */
-  recordEffect(measurement: EffectMeasurement): void {
+  private recordEffectFallback(measurement: EffectMeasurement): void {
     this.db.prepare(`
       INSERT INTO effect_tracking (insight_id, session_id, was_relevant, was_followed, outcome)
       VALUES (?, ?, ?, ?, ?)
     `).run(
-      measurement.insightId,
-      measurement.sessionId,
+      measurement.insightId, measurement.sessionId,
       measurement.wasRelevant ? 1 : 0,
       measurement.wasFollowed ? 1 : 0,
       measurement.outcome,
     );
-
-    // Update insight's effect_score based on recent measurements
-    this.updateEffectScore(measurement.insightId);
+    this.updateEffectScoreFallback(measurement.insightId);
   }
 
-  /** Recalculate effect score for an insight */
-  private updateEffectScore(insightId: string): void {
+  private updateEffectScoreFallback(insightId: string): void {
     const result = this.db.prepare(`
-      SELECT
-        COUNT(*) as total,
+      SELECT COUNT(*) as total,
         SUM(CASE WHEN outcome = 'positive' THEN 1 ELSE 0 END) as positive
-      FROM effect_tracking
-      WHERE insight_id = ?
-      ORDER BY created_at DESC
-      LIMIT 10
+      FROM effect_tracking WHERE insight_id = ?
+      ORDER BY created_at DESC LIMIT 10
     `).get(insightId) as { total: number; positive: number } | undefined;
 
     if (result && result.total > 0) {
       const score = result.positive / result.total;
-      this.db.prepare(`
-        UPDATE insights SET effect_score = ?, updated_at = datetime('now') WHERE id = ?
-      `).run(score, insightId);
+      this.db.prepare("UPDATE insights SET effect_score = ?, updated_at = datetime('now') WHERE id = ?").run(score, insightId);
     }
   }
 
-  // === Utility ===
-
-  /** Get statistics */
-  getStats(): { experiences: number; insights: number; tags: number } {
+  private getStatsFallback(): { experiences: number; insights: number; tags: number } {
     const exp = this.db.prepare('SELECT COUNT(*) as c FROM experiences').get() as { c: number };
     const ins = this.db.prepare('SELECT COUNT(*) as c FROM insights').get() as { c: number };
     const tag = this.db.prepare('SELECT COUNT(*) as c FROM tags').get() as { c: number };
     return { experiences: exp.c, insights: ins.c, tags: tag.c };
   }
 
-  /** Close database connection */
-  close(): void {
-    this.db.close();
-  }
-
-  // === Row mappers ===
+  // === Row mappers (fallback only) ===
 
   private mapExperience(row: Record<string, unknown>): ExperienceEntry {
     return {
