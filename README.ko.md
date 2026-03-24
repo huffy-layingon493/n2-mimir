@@ -306,7 +306,7 @@ Mimir가 AI 작업에 도움이 되셨다면, 개발을 후원해주세요:
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/choihyunsus)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/nton2)
 
-> 커피가 부담이시면 ⭐ 하나면 충분합니다 ☕ → ⭐
+> 이래도 커피 한 잔 얻어마실 자격이 없을까요? ☕
 
 ---
 
