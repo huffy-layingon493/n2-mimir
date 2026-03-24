@@ -58,3 +58,46 @@ export function extractSearchTerms(topic: string): string[] {
     .map((w) => w.toLowerCase().replace(/[^a-z0-9가-힣]/g, ''))
     .filter((w) => w.length > 1 && !stopWords.has(w));
 }
+
+/**
+ * Decompose a composite query into independent tag layers for intersection search.
+ * (architecture.md §8-8 Step 1)
+ *
+ * Example: "제과점 랜딩페이지 만들어줘" → [["랜딩페이지"], ["제과점"]]
+ *
+ * Each term that maps to a known domain becomes its own layer.
+ * Non-domain terms are grouped into a single "context" layer.
+ */
+export function decomposeQuery(topic: string): ReadonlyArray<ReadonlyArray<string>> {
+  const terms = extractSearchTerms(topic);
+  if (terms.length <= 1) return terms.length === 1 ? [terms] : [];
+
+  // Collect all known domain keywords in a lookup
+  const domainLookup = new Map<string, string>();
+  for (const [_category, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+    for (const keyword of keywords) {
+      domainLookup.set(keyword, _category);
+    }
+  }
+
+  // Separate domain terms (each becomes its own layer) from context terms
+  const layers: string[][] = [];
+  const contextTerms: string[] = [];
+
+  for (const term of terms) {
+    if (domainLookup.has(term)) {
+      // Domain keyword → its own layer for intersection
+      layers.push([term]);
+    } else {
+      // Non-domain → context layer
+      contextTerms.push(term);
+    }
+  }
+
+  // Group context terms as one layer (if any)
+  if (contextTerms.length > 0) {
+    layers.push(contextTerms);
+  }
+
+  return layers;
+}

@@ -41,7 +41,7 @@ fn set_version(conn: &Connection, version: u32) -> rusqlite::Result<()> {
 /// Each migration runs atomically in a savepoint.
 ///
 /// Returns number of migrations applied.
-pub fn run_migrations(conn: &Connection) -> rusqlite::Result<u32> {
+pub fn run_migrations(conn: &mut Connection) -> rusqlite::Result<u32> {
     let current = get_current_version(conn);
     if current >= SCHEMA_VERSION {
         return Ok(0);

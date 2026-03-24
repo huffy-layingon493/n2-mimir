@@ -12,13 +12,21 @@ import { getNativeBinding } from './native.js';
 import type { NativeBinding } from './native.js';
 import { SCHEMA_SQL } from './schema.js';
 import { runMigrations } from './migrations.js';
-import { createRequire } from 'module';
 import type BetterSqlite3 from 'better-sqlite3';
+// ESM-CJS interop: better-sqlite3 is a native CJS module,
+// createRequire is needed to load it from ESM context.
+import { createRequire } from 'node:module';
+
+import { randomUUID, randomBytes } from 'crypto';
 
 /** Generate a UUID v4 */
 function uuid(): string {
+  // Use crypto.randomUUID if available (Node 19+), fallback for older versions
+  if (randomUUID) {
+    return randomUUID();
+  }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
+    const r = randomBytes(1)[0] & 0xf;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
@@ -55,10 +63,30 @@ export class MimirDatabase {
       this.mode = 'rust';
     } else {
       // Fallback mode: better-sqlite3
+      // ESM → createRequire(import.meta.url), CJS → native require
       this.nativeHandle = null;
-      const esmRequire = createRequire(import.meta.url);
-      const Database = esmRequire('better-sqlite3') as typeof BetterSqlite3;
-      this.fallbackDb = new Database(dbPath);
+      let loadModule: NodeRequire;
+      if (typeof import.meta?.url === 'string' && import.meta.url !== '') {
+        loadModule = createRequire(import.meta.url);
+      } else {
+        // CJS context: require is natively available (tsup bundles __require shim)
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        loadModule = require;
+      }
+      try {
+        const Database = loadModule('better-sqlite3') as typeof BetterSqlite3;
+        this.fallbackDb = new Database(dbPath);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(
+          `[n2-mimir] Failed to load better-sqlite3: ${msg}\n\n` +
+          `Install it with: npm install better-sqlite3\n` +
+          `Requirements: Node.js >= 20, Python 3, C++ Build Tools\n` +
+          `  - Windows: npm install --global windows-build-tools\n` +
+          `  - macOS: xcode-select --install\n` +
+          `  - Linux: sudo apt-get install build-essential python3`,
+        );
+      }
       this.fallbackDb.pragma('journal_mode = WAL');
       this.fallbackDb.pragma('foreign_keys = ON');
       this.initializeFallback();
@@ -75,7 +103,6 @@ export class MimirDatabase {
   private initializeFallback(): void {
     if (!this.fallbackDb) return;
     this.fallbackDb.exec(SCHEMA_SQL);
-    this.fallbackDb.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);');
     runMigrations(this.fallbackDb);
   }
 
@@ -205,6 +232,30 @@ export class MimirDatabase {
     this.recordEffectFallback(measurement);
   }
 
+  // === Embeddings (Tier 2 semantic search) ===
+
+  storeEmbedding(sourceType: 'experience' | 'insight', sourceId: string, vector: readonly number[], model: string): void {
+    if (this.native && this.nativeHandle !== null) {
+      this.native.storeEmbedding(this.nativeHandle, sourceType, sourceId, JSON.stringify(vector), model);
+      return;
+    }
+    this.storeEmbeddingFallback(sourceType, sourceId, vector, model);
+  }
+
+  getEmbedding(sourceType: string, sourceId: string): { vector: readonly number[]; model: string } | null {
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.getEmbedding(this.nativeHandle, sourceType, sourceId);
+      if (!json) return null;
+      return { vector: JSON.parse(json) as number[], model: 'native' };
+    }
+    return this.getEmbeddingFallback(sourceType, sourceId);
+  }
+
+  getAllEmbeddings(): Array<{ sourceType: string; sourceId: string; vector: readonly number[] }> {
+    // Fallback only — Rust core can add batch method later
+    return this.getAllEmbeddingsFallback();
+  }
+
   // === Utility ===
 
   getStats(): { experiences: number; insights: number; tags: number } {
@@ -220,6 +271,65 @@ export class MimirDatabase {
     } else if (this.fallbackDb) {
       this.fallbackDb.close();
     }
+  }
+
+  // === Layer Intersection (architecture.md §8-8) ===
+
+  /**
+   * Find experiences matching ALL given tag layers (AND condition).
+   * This is the core of "layer intersection" — fp2 principle applied.
+   *
+   * Example: findExperiencesByTagsIntersection([['랜딩페이지'], ['제과점', '카페']])
+   *   → returns only experiences tagged with BOTH a term from layer[0] AND layer[1]
+   */
+  findExperiencesByTagsIntersection(
+    tagLayers: ReadonlyArray<ReadonlyArray<string>>,
+    limit = 20,
+  ): ExperienceEntry[] {
+    if (tagLayers.length === 0) return [];
+    // TODO: implement in Rust native. For now, only available in fallback mode.
+    if (!this.fallbackDb) return [];
+    return this.findByTagsIntersectionFallback(tagLayers, limit);
+  }
+
+  // === Delta Learning (architecture.md §8-8 Step 5) ===
+
+  /**
+   * Upsert experience: if a similar experience exists (same agent+project+category+action),
+   * increment its frequency. Otherwise insert new.
+   * Returns { isNew: boolean, id: string }
+   */
+  upsertExperience(input: ExperienceInput): { isNew: boolean; id: string } {
+    // TODO: implement in Rust native. For now, only available in fallback mode.
+    if (!this.fallbackDb) {
+      // Rust mode fallback: insert as new (no deduplicate)
+      const entry = this.insertExperience(input);
+      return { isNew: true, id: entry.id };
+    }
+    return this.upsertExperienceFallback(input);
+  }
+
+  // === Tag Similarity (architecture.md §8-8 — user confirmation) ===
+
+  /**
+   * Find tags similar to the given tag (user-confirmed equivalences).
+   * autoOnly=true → only returns pairs with confidence >= 0.9
+   */
+  findSimilarTags(tag: string, autoOnly = false): Array<{ tag: string; confidence: number }> {
+    // TODO: implement in Rust native. For now, only available in fallback mode.
+    if (!this.fallbackDb) return [];
+    return this.findSimilarTagsFallback(tag, autoOnly);
+  }
+
+  /**
+   * Record or update a user-confirmed tag similarity.
+   * Existing pair → confidence increases, confirmed_count++.
+   * New pair → inserted with confidence=0.5.
+   */
+  upsertTagSimilarity(tagA: string, tagB: string): void {
+    // TODO: implement in Rust native. For now, only available in fallback mode.
+    if (!this.fallbackDb) return;
+    this.upsertTagSimilarityFallback(tagA, tagB);
   }
 
   // ================================================
@@ -406,6 +516,155 @@ export class MimirDatabase {
     const ins = this.db.prepare('SELECT COUNT(*) as c FROM insights').get() as { c: number };
     const tag = this.db.prepare('SELECT COUNT(*) as c FROM tags').get() as { c: number };
     return { experiences: exp.c, insights: ins.c, tags: tag.c };
+  }
+
+  // === Embedding Fallback ===
+
+  private storeEmbeddingFallback(
+    sourceType: string, sourceId: string, vector: readonly number[], model: string,
+  ): void {
+    const id = uuid();
+    // Store as float32 binary blob for efficiency
+    const buffer = new Float32Array(vector).buffer;
+    const vectorBlob = Buffer.from(buffer);
+
+    this.db.prepare(`
+      INSERT OR REPLACE INTO embeddings (id, source_type, source_id, vector, model)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, sourceType, sourceId, vectorBlob, model);
+  }
+
+  private getEmbeddingFallback(
+    sourceType: string, sourceId: string,
+  ): { vector: readonly number[]; model: string } | null {
+    const row = this.db.prepare(`
+      SELECT vector, model FROM embeddings
+      WHERE source_type = ? AND source_id = ?
+      ORDER BY created_at DESC LIMIT 1
+    `).get(sourceType, sourceId) as { vector: Buffer; model: string } | undefined;
+
+    if (!row) return null;
+
+    // Convert binary blob back to float32 array
+    const float32 = new Float32Array(row.vector.buffer, row.vector.byteOffset, row.vector.byteLength / 4);
+    return { vector: Array.from(float32), model: row.model };
+  }
+
+  private getAllEmbeddingsFallback(): Array<{ sourceType: string; sourceId: string; vector: readonly number[] }> {
+    const rows = this.db.prepare(`
+      SELECT source_type, source_id, vector FROM embeddings
+    `).all() as Array<{ source_type: string; source_id: string; vector: Buffer }>;
+
+    return rows.map((row) => {
+      const float32 = new Float32Array(row.vector.buffer, row.vector.byteOffset, row.vector.byteLength / 4);
+      return {
+        sourceType: row.source_type,
+        sourceId: row.source_id,
+        vector: Array.from(float32),
+      };
+    });
+  }
+
+  // === Layer Intersection Fallback ===
+
+  private findByTagsIntersectionFallback(
+    tagLayers: ReadonlyArray<ReadonlyArray<string>>,
+    limit: number,
+  ): ExperienceEntry[] {
+    if (tagLayers.length === 0) return [];
+
+    // Build dynamic SQL: each layer adds a JOIN requiring at least one matching tag
+    const joins: string[] = [];
+    const params: unknown[] = [];
+
+    for (let i = 0; i < tagLayers.length; i++) {
+      const layer = tagLayers[i];
+      if (layer.length === 0) continue;
+      const placeholders = layer.map(() => '?').join(',');
+      joins.push(
+        `JOIN tags t${i} ON t${i}.experience_id = e.id AND t${i}.tag IN (${placeholders})`
+      );
+      params.push(...layer);
+    }
+
+    if (joins.length === 0) return [];
+
+    const sql = `SELECT DISTINCT e.* FROM experiences e ${joins.join(' ')} ORDER BY e.created_at DESC LIMIT ?`;
+    params.push(limit);
+
+    const rows = this.db.prepare(sql).all(...params) as Record<string, unknown>[];
+    return rows.map((r) => this.mapExperience(r));
+  }
+
+  // === Delta Learning Fallback ===
+
+  private upsertExperienceFallback(input: ExperienceInput): { isNew: boolean; id: string } {
+    // Find existing similar experience (same agent + project + category + similar action)
+    const existing = this.db.prepare(`
+      SELECT id, frequency FROM experiences
+      WHERE agent = ? AND project = ? AND category = ? AND action = ?
+      LIMIT 1
+    `).get(input.agent, input.project, input.category, input.action) as { id: string; frequency: number } | undefined;
+
+    if (existing) {
+      // Delta: increment frequency + update timestamp
+      this.db.prepare(`
+        UPDATE experiences
+        SET frequency = frequency + 1, created_at = datetime('now')
+        WHERE id = ?
+      `).run(existing.id);
+      return { isNew: false, id: existing.id };
+    }
+
+    // New experience: insert
+    const entry = this.insertExperienceFallback(input);
+    return { isNew: true, id: entry.id };
+  }
+
+  // === Tag Similarity Fallback ===
+
+  private findSimilarTagsFallback(
+    tag: string,
+    autoOnly: boolean,
+  ): Array<{ tag: string; confidence: number }> {
+    const threshold = autoOnly ? 0.9 : 0.0;
+    const rows = this.db.prepare(`
+      SELECT
+        CASE WHEN tag_a = ? THEN tag_b ELSE tag_a END as similar_tag,
+        confidence
+      FROM tag_similarity
+      WHERE (tag_a = ? OR tag_b = ?) AND confidence >= ?
+      ORDER BY confidence DESC
+    `).all(tag, tag, tag, threshold) as Array<{ similar_tag: string; confidence: number }>;
+
+    return rows.map((r) => ({ tag: r.similar_tag, confidence: r.confidence }));
+  }
+
+  private upsertTagSimilarityFallback(tagA: string, tagB: string): void {
+    // Normalize order to avoid duplicates (alphabetical)
+    const [a, b] = tagA < tagB ? [tagA, tagB] : [tagB, tagA];
+
+    const existing = this.db.prepare(
+      'SELECT id, confirmed_count FROM tag_similarity WHERE tag_a = ? AND tag_b = ?'
+    ).get(a, b) as { id: number; confirmed_count: number } | undefined;
+
+    if (existing) {
+      // Re-confirmation: increase confidence (asymptotic approach to 1.0)
+      // Formula: new_confidence = 1 - (1 / (confirmed_count + 1))
+      const newCount = existing.confirmed_count + 1;
+      const newConfidence = 1 - (1 / (newCount + 1));
+      this.db.prepare(`
+        UPDATE tag_similarity
+        SET confidence = ?, confirmed_count = ?, updated_at = datetime('now')
+        WHERE id = ?
+      `).run(newConfidence, newCount, existing.id);
+    } else {
+      // First confirmation
+      this.db.prepare(`
+        INSERT INTO tag_similarity (tag_a, tag_b, confidence, confirmed_count)
+        VALUES (?, ?, 0.5, 1)
+      `).run(a, b);
+    }
   }
 
   // === Row mappers (fallback only) ===

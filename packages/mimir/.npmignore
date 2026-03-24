@@ -1,0 +1,27 @@
+# Source
+src/
+tests/
+tsconfig.json
+vitest.config.*
+
+# Build tools
+*.tsbuildinfo
+
+# Development files
+.git
+.github
+.vscode
+.gitignore
+
+# Documentation (not needed in npm package)
+docs/
+
+# Test databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Temporary files
+*.log
+*.tmp

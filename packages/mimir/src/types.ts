@@ -30,8 +30,10 @@ export interface ExperienceEntry {
 
 /** Experience input for insertion */
 export interface ExperienceInput {
-  readonly agent: string;
-  readonly project: string;
+  /** Agent name (default: 'default') */
+  readonly agent?: string;
+  /** Project name (default: 'default') */
+  readonly project?: string;
   readonly type: ExperienceType;
   readonly category: string;
   readonly severity?: Severity;

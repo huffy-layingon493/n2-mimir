@@ -20,11 +20,11 @@ lazy_static::lazy_static! {
 
 /// Open or create a Mímir database. Returns a handle ID.
 pub fn open(db_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
-    let conn = Connection::open(db_path)?;
+    let mut conn = Connection::open(db_path)?;
     conn.execute_batch("PRAGMA journal_mode = WAL;")?;
     conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     conn.execute_batch(schema::SCHEMA_SQL)?;
-    migration::run_migrations(&conn)?;
+    migration::run_migrations(&mut conn)?;
 
     let mut counter = HANDLE_COUNTER.lock().unwrap();
     *counter += 1;

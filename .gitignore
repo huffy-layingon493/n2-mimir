@@ -3,7 +3,19 @@ node_modules/
 
 # Build output
 dist/
+dist-cjs/
 *.tsbuildinfo
+
+# Rust build
+packages/core/target/
+packages/core/Cargo.lock
+
+# Runtime data
+backups/
+rules/
+*.db
+*.db-journal
+*.db-wal
 
 # IDE
 .vscode/
@@ -22,3 +34,10 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Internal docs (not for distribution)
+HANDOFF-*.md
+REFLECTION-*.md
+docs/WORK-LOG-*.md
+docs/redesign-*.md
+docs/architecture-evolution-*.md

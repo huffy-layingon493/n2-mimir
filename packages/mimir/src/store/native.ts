@@ -1,14 +1,10 @@
-// native.ts — Rust core native binding loader
+// native.ts — Rust core native binding loader (CJS compatible)
 // Loads the napi-rs compiled native addon from packages/core
 //
 // When Rust core is built: uses native bindings (rusqlite, SIMD)
 // Fallback: uses better-sqlite3 TypeScript implementation
 
-import { createRequire } from 'module';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from 'path';
 
 // napi-rs native binding interface (matches lib.rs exports)
 export interface NativeBinding {
@@ -38,13 +34,32 @@ export interface NativeBinding {
 /** Try to load native Rust binding, returns null if not available */
 function tryLoadNative(): NativeBinding | null {
   try {
-    const esmRequire = createRequire(import.meta.url);
-    // Try platform-specific binary first (napi-rs convention)
+    const platformName = `n2_mimir_core.${process.platform}-${process.arch}.node`;
+    // 1) Same directory (store/) — for co-located deployments
+    try {
+      return require(join(__dirname, platformName)) as NativeBinding;
+    } catch { /* not here */ }
+
+    // 2) Parent directory (lib/mimir/) — standard deployment location
+    try {
+      return require(join(__dirname, '..', platformName)) as NativeBinding;
+    } catch { /* not here */ }
+
+    // 3) Same directory — generic name
+    try {
+      return require(join(__dirname, 'n2-mimir-core.node')) as NativeBinding;
+    } catch { /* not here */ }
+
+    // 4) Parent directory — generic name
+    try {
+      return require(join(__dirname, '..', 'n2-mimir-core.node')) as NativeBinding;
+    } catch { /* not here */ }
+
+    // 5) Original packages/core path — for development
     const corePath = join(__dirname, '..', '..', '..', 'core');
-    const binding = esmRequire(join(corePath, 'n2-mimir-core.node')) as NativeBinding;
-    return binding;
+    return require(join(corePath, 'n2-mimir-core.node')) as NativeBinding;
   } catch {
-    // Native binding not available
+    // Native binding not available — fallback to better-sqlite3
     return null;
   }
 }

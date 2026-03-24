@@ -1,5 +1,7 @@
 // Overlay converter — generates prompt injection text from insights
+// Includes question sequence logic (architecture.md §8-9)
 import type { Insight } from '../types.js';
+import type { RecallConfidence } from '../orchestrator/recall.js';
 import { scoreInsight } from '../analyzer/weight.js';
 
 /**
@@ -42,6 +44,40 @@ export function generateOverlay(
   if (lines.length <= 1) return ''; // Only header, no insights fit budget
 
   return lines.join('\n');
+}
+
+/**
+ * Generate question sequence prefix based on recall confidence (architecture.md §8-9).
+ *
+ * - none:      "⚡ 이 주제는 처음입니다. 사용자에게 구체적으로 질문하세요."
+ * - ambiguous: "⚡ 과거 선호: X(3회), Y(1회). 확인 후 진행하세요."
+ * - clear:     "⚡ 기본값: X. 바로 진행 가능."
+ */
+export function generateQuestionSequencePrefix(
+  confidence: RecallConfidence,
+  dominantPattern?: string,
+  patternCounts?: ReadonlyArray<{ pattern: string; count: number }>,
+): string {
+  switch (confidence) {
+    case 'none':
+      return '⚡ 이 주제는 처음입니다. 사용자에게 구체적으로 질문하세요.';
+
+    case 'ambiguous': {
+      if (!patternCounts || patternCounts.length === 0) {
+        return '⚡ 과거 경험이 있지만 패턴이 불명확합니다. 확인 후 진행하세요.';
+      }
+      const summary = patternCounts
+        .slice(0, 3) // top 3 only
+        .map((p) => `${p.pattern.slice(0, 30)}(${p.count}회)`)
+        .join(', ');
+      return `⚡ 과거 선호: ${summary}. 확인 후 진행하세요.`;
+    }
+
+    case 'clear': {
+      const pattern = dominantPattern?.slice(0, 50) ?? '확인됨';
+      return `⚡ 기본값: ${pattern}. 바로 진행 가능.`;
+    }
+  }
 }
 
 /** Rough token estimation (1 token ≈ 4 chars) */

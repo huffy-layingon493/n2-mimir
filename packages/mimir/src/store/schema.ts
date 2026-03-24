@@ -98,20 +98,56 @@ CREATE TABLE IF NOT EXISTS effect_tracking (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Performance indexes
-CREATE INDEX IF NOT EXISTS idx_exp_project ON experiences(project);
-CREATE INDEX IF NOT EXISTS idx_exp_agent ON experiences(agent);
-CREATE INDEX IF NOT EXISTS idx_exp_category ON experiences(category);
-CREATE INDEX IF NOT EXISTS idx_exp_type ON experiences(type);
+-- experience↔insight links (N:M relationship)
+CREATE TABLE IF NOT EXISTS experience_insight_links (
+  experience_id TEXT NOT NULL REFERENCES experiences(id) ON DELETE CASCADE,
+  insight_id TEXT NOT NULL REFERENCES insights(id) ON DELETE CASCADE,
+  relation TEXT NOT NULL DEFAULT 'supports' CHECK(relation IN ('supports','contradicts')),
+  PRIMARY KEY (experience_id, insight_id)
+);
+
+-- insight↔insight links (graph)
+CREATE TABLE IF NOT EXISTS insight_links (
+  source_id TEXT NOT NULL REFERENCES insights(id) ON DELETE CASCADE,
+  target_id TEXT NOT NULL REFERENCES insights(id) ON DELETE CASCADE,
+  relation TEXT NOT NULL DEFAULT 'related' CHECK(relation IN ('related','extends','supersedes')),
+  PRIMARY KEY (source_id, target_id)
+);
+
+-- schema version tracking
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+
+-- tag_similarity: user-confirmed tag equivalences (architecture.md 8-8)
+-- confidence starts at 0.5, rises with re-confirmation, auto-match at >= 0.9
+CREATE TABLE IF NOT EXISTS tag_similarity (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tag_a TEXT NOT NULL,
+  tag_b TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 0.5,
+  confirmed_count INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(tag_a, tag_b)
+);
+
+-- Performance indexes (architecture.md section 8-2)
+CREATE INDEX IF NOT EXISTS idx_exp_project_category ON experiences(project, category);
+CREATE INDEX IF NOT EXISTS idx_exp_type_severity ON experiences(type, severity);
+CREATE INDEX IF NOT EXISTS idx_exp_timestamp ON experiences(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_exp_project_agent ON experiences(project, agent);
-CREATE INDEX IF NOT EXISTS idx_ins_category ON insights(category);
-CREATE INDEX IF NOT EXISTS idx_ins_status ON insights(status);
-CREATE INDEX IF NOT EXISTS idx_ins_importance ON insights(importance DESC);
-CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
+CREATE INDEX IF NOT EXISTS idx_tags_level_tag ON tags(level, tag);
 CREATE INDEX IF NOT EXISTS idx_tags_exp ON tags(experience_id);
+CREATE INDEX IF NOT EXISTS idx_ins_status ON insights(status, importance DESC);
+CREATE INDEX IF NOT EXISTS idx_ins_category ON insights(category);
 CREATE INDEX IF NOT EXISTS idx_emb_source ON embeddings(source_type, source_id);
 CREATE INDEX IF NOT EXISTS idx_eff_insight ON effect_tracking(insight_id);
+CREATE INDEX IF NOT EXISTS idx_exp_ins_link ON experience_insight_links(insight_id);
+CREATE INDEX IF NOT EXISTS idx_tag_sim_a ON tag_similarity(tag_a);
+CREATE INDEX IF NOT EXISTS idx_tag_sim_b ON tag_similarity(tag_b);
 `;
 
 /** Schema version for migration tracking */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;

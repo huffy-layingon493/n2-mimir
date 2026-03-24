@@ -114,6 +114,7 @@ describe('assembler', () => {
         effectScore: 0.5, status: 'active',
       }],
       ftsResults: [],
+      confidence: 'none',
     }, 500);
     expect(result.totalTokens).toBeLessThanOrEqual(500);
     expect(result.insightCount).toBe(1);
@@ -126,7 +127,10 @@ describe('assembler', () => {
       category: 'c', scope: 'project' as const, importance: 3, confidence: 0.8,
       effectScore: 0.5, status: 'active' as const,
     }));
-    const result = assemble({ experiences: [], tagChain: [], insights: bigInsights, ftsResults: [] }, 100);
+    const result = assemble({
+      experiences: [], tagChain: [], insights: bigInsights, ftsResults: [],
+      confidence: 'none',
+    }, 100);
     expect(result.totalTokens).toBeLessThanOrEqual(100);
   });
 });

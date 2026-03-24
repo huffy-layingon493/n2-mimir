@@ -16,7 +16,7 @@ napi = { version = "2", default-features = false, features = ["napi8", "serde-js
 napi-derive = "2"
 
 # SQLite: zero-copy, embedded database
-rusqlite = { version = "0.31", features = ["bundled", "fts5", "blob"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

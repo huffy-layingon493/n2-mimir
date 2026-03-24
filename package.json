@@ -7,10 +7,10 @@
     "packages/mimir"
   ],
   "scripts": {
-    "build:rust": "cd packages/core && cargo build --release",
-    "test:rust": "cd packages/core && cargo test",
-    "build:ts": "cd packages/mimir && npm run build",
-    "test:ts": "cd packages/mimir && npm run test",
+    "build:rust": "cd packages/core ; cargo build --release",
+    "test:rust": "cd packages/core ; cargo test",
+    "build:ts": "cd packages/mimir ; npm run build",
+    "test:ts": "cd packages/mimir ; npm run test",
     "build": "npm run build:rust; npm run build:ts",
     "test": "npm run test:rust; npm run test:ts"
   },

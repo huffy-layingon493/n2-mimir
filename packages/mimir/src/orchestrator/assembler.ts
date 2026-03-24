@@ -1,29 +1,41 @@
 // Assembler — assemble recalled experiences + insights into token-budgeted output
-import type { RecallResult, AssemblyResult, Insight } from '../types.js';
+// Integrates question sequence (architecture.md §8-9)
+import type { AssemblyResult, Insight } from '../types.js';
+import type { RecallResultWithConfidence } from './recall.js';
 import { scoreInsight } from '../analyzer/weight.js';
-import { generateOverlay } from '../converter/overlay.js';
+import { generateOverlay, generateQuestionSequencePrefix } from '../converter/overlay.js';
 
 /**
  * Assemble recalled results into a token-budgeted overlay.
  * This is the final step: recall results → prompt-ready text.
  *
  * Budget allocation:
+ * - Question sequence prefix (fixed cost)
  * - 70% for insights (compressed)
  * - 30% for experience examples (top relevant)
  */
 export function assemble(
-  result: RecallResult,
+  result: RecallResultWithConfidence,
   tokenBudget = 500,
   halfLife = 14,
 ): AssemblyResult {
+  // Question sequence prefix (§8-9)
+  const prefix = generateQuestionSequencePrefix(
+    result.confidence,
+    result.dominantPattern,
+    result.patternCounts,
+  );
+  const prefixCost = Math.ceil(prefix.length / 4);
+  const remainingBudget = tokenBudget - prefixCost;
+
   // Score and sort insights
   const scoredInsights = result.insights
     .map((insight) => ({ insight, score: scoreInsight(insight, halfLife), tokenCost: insight.tokenCost }))
     .sort((a, b) => b.score - a.score);
 
   // Budget split: 70% insights, 30% experience context
-  const insightBudget = Math.floor(tokenBudget * 0.7);
-  const experienceBudget = tokenBudget - insightBudget;
+  const insightBudget = Math.floor(remainingBudget * 0.7);
+  const experienceBudget = remainingBudget - insightBudget;
 
   // Select insights within budget
   const selectedInsights: Insight[] = [];
@@ -51,13 +63,18 @@ export function assemble(
     expTokens += cost;
   }
 
-  const fullOverlay = experienceLines.length > 0
-    ? `${overlay}\n\n📋 관련 경험:\n${experienceLines.join('\n')}`
-    : overlay;
+  // Compose: prefix + insights + experiences
+  const parts: string[] = [prefix];
+  if (overlay) parts.push(overlay);
+  if (experienceLines.length > 0) {
+    parts.push(`\n📋 관련 경험:\n${experienceLines.join('\n')}`);
+  }
+
+  const fullOverlay = parts.join('\n');
 
   return {
     overlay: fullOverlay,
-    totalTokens: insightTokens + expTokens,
+    totalTokens: prefixCost + insightTokens + expTokens,
     insightCount: selectedInsights.length,
     selectedIds: selectedInsights.map((i) => i.id),
   };

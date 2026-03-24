@@ -39,6 +39,7 @@ pub fn time_decay(created_at: &str, half_life_days: f64) -> f64 {
 ///
 /// reinforcement = 1 + (upvotes - downvotes) × 0.2
 /// Clamped to minimum 0.2 (never fully zero out a voted-down insight).
+#[allow(dead_code)]
 pub fn reinforcement(importance: i64) -> f64 {
     // importance starts at 2, upvote = +1, downvote = -1
     // So net_votes = importance - 2 (initial)
@@ -49,6 +50,7 @@ pub fn reinforcement(importance: i64) -> f64 {
 /// Compute combined weight for sorting/ranking.
 ///
 /// weight = time_decay × reinforcement × severity_multiplier
+#[allow(dead_code)]
 pub fn combined_weight(
     created_at: &str,
     importance: i64,
