@@ -11,6 +11,7 @@ export interface NativeBinding {
   openDatabase(dbPath: string): number;
   closeDatabase(handle: number): void;
   insertExperience(handle: number, inputJson: string): string;
+  upsertExperience(handle: number, inputJson: string): string;
   getExperience(handle: number, id: string): string;
   queryExperiences(handle: number, filterJson: string): string;
   searchExperiences(handle: number, query: string, limit: number): string;
@@ -23,6 +24,9 @@ export interface NativeBinding {
   setTags(handle: number, experienceId: string, tagsJson: string): void;
   getTagFrequencies(handle: number, tagsJson: string, limit: number): string;
   findExperiencesByTags(handle: number, tagsJson: string, limit: number): string;
+  findExperiencesByTagsIntersection(handle: number, tagsLayersJson: string, limit: number): string;
+  findSimilarTags(handle: number, tag: string, autoOnly: boolean): string;
+  upsertTagSimilarity(handle: number, tagA: string, tagB: string): void;
   recordEffect(handle: number, inputJson: string): void;
   getStats(handle: number): string;
   cosineSimilarity(vecAJson: string, vecBJson: string): number;

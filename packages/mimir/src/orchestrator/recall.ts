@@ -90,19 +90,25 @@ export function recall(
     : [];
 
   // Merge & deduplicate experiences (intersection results first — highest priority)
+  // We only set if not present to preserve the insertion order and semantic ranking.
   const experienceMap = new Map<string, ExperienceEntry>();
-  for (const e of intersectionExperiences) experienceMap.set(e.id, e);
-  for (const r of ftsResults) experienceMap.set(r.experience.id, r.experience);
-  for (const e of tagExperiences) experienceMap.set(e.id, e);
-  for (const e of projectExperiences) experienceMap.set(e.id, e);
+  const addExperience = (e: ExperienceEntry) => {
+    if (!experienceMap.has(e.id)) {
+      experienceMap.set(e.id, e);
+    }
+  };
 
-  // Path 6: Semantic search (Tier 2 — if Embedder is available)
+  for (const e of intersectionExperiences) addExperience(e);
+  for (const r of ftsResults) addExperience(r.experience);
+  for (const e of tagExperiences) addExperience(e);
+
+  // Path 6: Semantic search (Tier 2 — if Embedder is available AND embeddings exist)
   if (embedder?.isAvailable()) {
-    const allEmbeddings = db.getAllEmbeddings();
-    if (allEmbeddings.length > 0) {
-      // Try sync lookup from cache (populated during digest/addExperience)
-      const queryEmbedding = embedder.embedSync(topic);
-      if (queryEmbedding) {
+    const queryEmbedding = embedder.embedSync(topic);
+    if (queryEmbedding) {
+      // Only scan when fallback store has embeddings (Rust mode returns [] for now)
+      const allEmbeddings = db.getAllEmbeddings();
+      if (allEmbeddings.length > 0) {
         const scored: Array<{ id: string; score: number }> = [];
         for (const stored of allEmbeddings) {
           const score = cosineSimilarity(
@@ -113,16 +119,17 @@ export function recall(
             scored.push({ id: stored.sourceId, score });
           }
         }
-        // Sort by similarity, take top results
         scored.sort((a, b) => b.score - a.score);
-        const topIds = scored.slice(0, limit).map((s) => s.id);
-        for (const id of topIds) {
-          const exp = db.getExperience(id);
-          if (exp) experienceMap.set(exp.id, exp);
+        for (const s of scored.slice(0, limit)) {
+          const exp = db.getExperience(s.id);
+          if (exp) addExperience(exp);
         }
       }
     }
   }
+
+  // Path 7: Project-scoped experience filter (widest catch-all, lowest priority)
+  for (const e of projectExperiences) addExperience(e);
 
   // Deduplicate insights
   const insightMap = new Map<string, Insight>();
@@ -131,7 +138,7 @@ export function recall(
   // Assess confidence for question sequence (§8-9)
   const allExperiences = [...experienceMap.values()];
   const allInsights = [...insightMap.values()];
-  const { confidence, dominantPattern, patternCounts } = assessConfidence(allExperiences);
+  const { confidence, dominantPattern, patternCounts } = assessConfidence(db, allExperiences);
 
   return {
     experiences: allExperiences,
@@ -149,6 +156,7 @@ export function recall(
  * Drives the question sequence behavior (architecture.md §8-9).
  */
 function assessConfidence(
+  db: MimirDatabase,
   experiences: ReadonlyArray<ExperienceEntry>,
 ): {
   confidence: RecallConfidence;
@@ -159,17 +167,60 @@ function assessConfidence(
     return { confidence: 'none' };
   }
 
-  // Count action patterns to determine clarity
-  const actionCounts = new Map<string, number>();
+  // Dual-mode clustering: Semantic vs Jaccard Textual
+  const clusters: Array<{
+    pattern: string;
+    count: number;
+    vector?: readonly number[];
+    tokens: Set<string>;
+  }> = [];
+
   for (const exp of experiences) {
-    // Normalize action to first 50 chars for grouping
-    const key = exp.action.slice(0, 50).toLowerCase();
-    actionCounts.set(key, (actionCounts.get(key) ?? 0) + 1);
+    const vectorData = db.getEmbedding('experience', exp.id);
+    const vector = vectorData?.vector;
+    
+    // Fallback tokenizer (lowercase words, Unicode-aware for Korean/multilingual)
+    const tokens = new Set(exp.action.toLowerCase().match(/[\w\u3131-\u318E\uAC00-\uD7A3]+/g) ?? []);
+    
+    let matchedCluster = false;
+    
+    for (const cluster of clusters) {
+      if (vector && cluster.vector) {
+        // Semantic mode
+        const sim = cosineSimilarity(vector as number[], cluster.vector as number[]);
+        if (sim >= 0.85) {
+          cluster.count++;
+          matchedCluster = true;
+          break;
+        }
+      } else {
+        // Textual fallback mode (Jaccard distance)
+        let intersection = 0;
+        for (const t of tokens) if (cluster.tokens.has(t)) intersection++;
+        const union = tokens.size + cluster.tokens.size - intersection;
+        const jaccard = union === 0 ? 1 : intersection / union;
+        
+        if (jaccard >= 0.7) {
+          cluster.count++;
+          matchedCluster = true;
+          break;
+        }
+      }
+    }
+    
+    if (!matchedCluster) {
+      clusters.push({
+        pattern: exp.action,
+        count: 1,
+        vector,
+        tokens,
+      });
+    }
   }
 
-  const sorted = [...actionCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([pattern, count]) => ({ pattern, count }));
+  const sorted = clusters
+    .sort((a, b) => b.count - a.count)
+    .map((c) => ({ pattern: c.pattern, count: c.count }));
 
   if (sorted.length === 0) {
     return { confidence: 'none' };

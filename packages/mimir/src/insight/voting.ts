@@ -28,12 +28,6 @@ export function applyOperations(
           db.downvoteInsight(op.insightId);
           applied++;
           break;
-        case 'EDIT': {
-          // Edit = UPVOTE + keep the reference for future updates
-          db.upvoteInsight(op.insightId);
-          applied++;
-          break;
-        }
       }
     } catch {
       skipped++;

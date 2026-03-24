@@ -38,14 +38,19 @@ export function getGraduatedInsights(db: MimirDatabase): Insight[] {
   return db.queryInsights({ status: 'graduated' });
 }
 
-/** Retire dormant insights (importance dropped to 0) */
+/**
+ * Retire dormant insights — cleanup for edge cases where DB auto-retirement missed.
+ * Note: downvoteInsight() SQL already sets status='retired' when importance <= 1.
+ * This function handles any inconsistent state (e.g. importance=0 but still 'active').
+ */
 export function retireDormantInsights(db: MimirDatabase): number {
-  const dormant = db.queryInsights({ status: 'active', limit: 100 });
+  const candidates = db.queryInsights({ status: 'active', limit: 100 });
   let retired = 0;
 
-  for (const insight of dormant) {
-    if (insight.importance <= 0) {
-      db.downvoteInsight(insight.id); // This triggers retirement in database.ts
+  for (const insight of candidates) {
+    if (insight.importance <= 1) {
+      // Force retirement for inconsistent state (should already be retired by DB)
+      db.downvoteInsight(insight.id);
       retired++;
     }
   }

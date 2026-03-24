@@ -91,19 +91,28 @@ export class FallbackStore {
   }
 
   searchExperiences(query: string, limit: number): RankedExperience[] {
-    const sql = `
-      SELECT e.*, rank
-      FROM experiences_fts fts
-      JOIN experiences e ON e.rowid = fts.rowid
-      WHERE experiences_fts MATCH ?
-      ORDER BY rank
-      LIMIT ?
-    `;
-    const rows = this.db.prepare(sql).all(query, limit) as Array<Record<string, unknown>>;
-    return rows.map((r, i) => ({
-      experience: this.mapExperience(r),
-      rank: i + 1,
-    }));
+    // Sanitize FTS5 query: escape special characters to prevent MATCH syntax errors
+    const sanitized = sanitizeFtsQuery(query);
+    if (!sanitized) return [];
+
+    try {
+      const sql = `
+        SELECT e.*, rank
+        FROM experiences_fts fts
+        JOIN experiences e ON e.rowid = fts.rowid
+        WHERE experiences_fts MATCH ?
+        ORDER BY rank
+        LIMIT ?
+      `;
+      const rows = this.db.prepare(sql).all(sanitized, limit) as Array<Record<string, unknown>>;
+      return rows.map((r, i) => ({
+        experience: this.mapExperience(r),
+        rank: i + 1,
+      }));
+    } catch {
+      // FTS5 query syntax error — fall back to empty results rather than crash
+      return [];
+    }
   }
 
   // === Insight CRUD ===
@@ -401,4 +410,25 @@ export class FallbackStore {
       convertedRef: row['converted_ref'] as string | undefined,
     };
   }
+}
+
+/**
+ * Sanitize FTS5 query string to prevent MATCH syntax errors.
+ * Removes FTS5 meta-characters and operators that can cause runtime crashes.
+ * Returns null if no valid search terms remain.
+ */
+function sanitizeFtsQuery(query: string): string | null {
+  // Remove FTS5 special operators and syntax characters
+  const sanitized = query
+    .replace(/[*^"(){}[\]]/g, '')   // Remove special punctuation
+    .replace(/\bNEAR\b/gi, '')      // Remove NEAR operator
+    .replace(/\bNOT\b/gi, '')       // Remove NOT operator
+    .replace(/\bAND\b/gi, '')       // Remove AND operator (FTS5 uses implicit AND)
+    .replace(/\s+/g, ' ')           // Collapse whitespace
+    .trim();
+
+  // Return null if nothing meaningful remains
+  if (!sanitized || sanitized.length < 2) return null;
+
+  return sanitized;
 }

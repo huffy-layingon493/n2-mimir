@@ -127,10 +127,9 @@ export interface ContrastPair {
   readonly category: string;
 }
 
-/** Insight operation from LLM analysis */
+/** Insight operation from analysis */
 export type InsightOperation =
   | { readonly op: 'ADD'; readonly insight: InsightInput }
-  | { readonly op: 'EDIT'; readonly insightId: string; readonly updates: Partial<Insight> }
   | { readonly op: 'UPVOTE'; readonly insightId: string }
   | { readonly op: 'DOWNVOTE'; readonly insightId: string };
 

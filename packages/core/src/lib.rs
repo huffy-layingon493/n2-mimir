@@ -42,6 +42,13 @@ pub fn get_experience(handle: i64, id: String) -> Result<String> {
         .map_err(|e| Error::from_reason(e.to_string()))
 }
 
+/// Upsert experience (Delta Learning).
+#[napi]
+pub fn upsert_experience(handle: i64, input_json: String) -> Result<String> {
+    db::upsert_experience(handle, &input_json)
+        .map_err(|e| Error::from_reason(e.to_string()))
+}
+
 /// Query experiences with JSON filter. Returns JSON array.
 #[napi]
 pub fn query_experiences(handle: i64, filter_json: String) -> Result<String> {
@@ -126,6 +133,25 @@ pub fn get_tag_frequencies(handle: i64, tags_json: String, limit: i32) -> Result
 #[napi]
 pub fn find_experiences_by_tags(handle: i64, tags_json: String, limit: i32) -> Result<String> {
     search::find_by_tags(handle, &tags_json, limit as usize)
+        .map_err(|e| Error::from_reason(e.to_string()))
+}
+
+/// Find experiences by tags intersection. Returns JSON array.
+#[napi]
+pub fn find_experiences_by_tags_intersection(handle: i64, tags_layers_json: String, limit: i32) -> Result<String> {
+    search::find_by_tags_intersection(handle, &tags_layers_json, limit as usize)
+        .map_err(|e| Error::from_reason(e.to_string()))
+}
+
+#[napi]
+pub fn find_similar_tags(handle: i64, tag: String, auto_only: bool) -> Result<String> {
+    db::find_similar_tags(handle, &tag, auto_only)
+        .map_err(|e| Error::from_reason(e.to_string()))
+}
+
+#[napi]
+pub fn upsert_tag_similarity(handle: i64, tag_a: String, tag_b: String) -> Result<()> {
+    db::upsert_tag_similarity(handle, &tag_a, &tag_b)
         .map_err(|e| Error::from_reason(e.to_string()))
 }
 

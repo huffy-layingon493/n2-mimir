@@ -185,15 +185,25 @@ export class Mimir {
     insightsCreated: number;
     graduated: string[];
   }> {
-    // Step 1: Collect from all adapters (with delta learning)
+    // Step 1: Collect from all adapters concurrently (with delta learning)
     let collected = 0;
-    for (const adapter of this.adapters) {
-      const rawExperiences = await adapter.collect(options.project, options.agent ?? 'default');
-      for (const raw of rawExperiences) {
-        const normalized = normalize(raw);
-        if (!normalized) continue;
-        const result = this.db.upsertExperience(normalized);
-        if (result.isNew) collected++;
+    const collectionPromises = this.adapters.map(adapter => 
+      adapter.collect(options.project, options.agent ?? 'default')
+    );
+    
+    const results = await Promise.allSettled(collectionPromises);
+    
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const rawExperiences = result.value;
+        for (const raw of rawExperiences) {
+          const normalized = normalize(raw);
+          if (!normalized) continue;
+          const upsertResult = this.db.upsertExperience(normalized);
+          if (upsertResult.isNew) collected++;
+        }
+      } else {
+        console.error('[n2-mimir] Adapter collection failed:', result.reason);
       }
     }
 
@@ -222,18 +232,39 @@ export class Mimir {
     const graduated = evaluateGraduation(this.db);
     retireDormantInsights(this.db);
 
-    // Step 7: Embed new experiences and insights (Tier 2 — if available)
+    // Step 7: Batch embed new experiences and insights (Tier 2 — if semantic available)
     if (this.embedder.isAvailable()) {
       const newExperiences = this.db.queryExperiences({
         project: options.project, limit: 50,
       });
-      for (const exp of newExperiences) {
-        await embedAndStore(this.db, this.embedder, 'experience', exp.id, experienceToText(exp));
+      // Filter to un-embedded experiences only, then batch embed
+      const unembeddedExps = newExperiences.filter(
+        (exp) => !this.db.getEmbedding('experience', exp.id),
+      );
+      if (unembeddedExps.length > 0) {
+        const expTexts = unembeddedExps.map((exp) => experienceToText(exp));
+        const expResults = await this.embedder.embedBatch(expTexts);
+        for (let i = 0; i < unembeddedExps.length; i++) {
+          const result = expResults[i];
+          if (result) {
+            this.db.storeEmbedding('experience', unembeddedExps[i].id, result.vector, result.model);
+          }
+        }
       }
 
       const activeInsights = this.db.queryInsights({ status: 'active', limit: 50 });
-      for (const ins of activeInsights) {
-        await embedAndStore(this.db, this.embedder, 'insight', ins.id, insightToText(ins));
+      const unembeddedIns = activeInsights.filter(
+        (ins) => !this.db.getEmbedding('insight', ins.id),
+      );
+      if (unembeddedIns.length > 0) {
+        const insTexts = unembeddedIns.map((ins) => insightToText(ins));
+        const insResults = await this.embedder.embedBatch(insTexts);
+        for (let i = 0; i < unembeddedIns.length; i++) {
+          const result = insResults[i];
+          if (result) {
+            this.db.storeEmbedding('insight', unembeddedIns[i].id, result.vector, result.model);
+          }
+        }
       }
     }
 

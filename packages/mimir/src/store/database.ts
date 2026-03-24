@@ -251,29 +251,38 @@ export class MimirDatabase {
     limit = 20,
   ): ExperienceEntry[] {
     if (tagLayers.length === 0) return [];
-    if (!this.fallback) return [];
-    return this.fallback.findByTagsIntersection(tagLayers, limit);
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.findExperiencesByTagsIntersection(this.nativeHandle, JSON.stringify(tagLayers), limit);
+      return JSON.parse(json) as ExperienceEntry[];
+    }
+    return this.fallback!.findByTagsIntersection(tagLayers, limit);
   }
 
   // === Delta Learning (architecture.md §8-8 Step 5) ===
 
   upsertExperience(input: ExperienceInput): { isNew: boolean; id: string } {
-    if (!this.fallback) {
-      const entry = this.insertExperience(input);
-      return { isNew: true, id: entry.id };
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.upsertExperience(this.nativeHandle, JSON.stringify(input));
+      return JSON.parse(json) as { isNew: boolean; id: string };
     }
-    return this.fallback.upsertExperience(input);
+    return this.fallback!.upsertExperience(input);
   }
 
   // === Tag Similarity (architecture.md §8-8) ===
 
   findSimilarTags(tag: string, autoOnly = false): Array<{ tag: string; confidence: number }> {
-    if (!this.fallback) return [];
-    return this.fallback.findSimilarTags(tag, autoOnly);
+    if (this.native && this.nativeHandle !== null) {
+      const json = this.native.findSimilarTags(this.nativeHandle, tag, autoOnly);
+      return JSON.parse(json) as Array<{ tag: string; confidence: number }>;
+    }
+    return this.fallback!.findSimilarTags(tag, autoOnly);
   }
 
   upsertTagSimilarity(tagA: string, tagB: string): void {
-    if (!this.fallback) return;
-    this.fallback.upsertTagSimilarity(tagA, tagB);
+    if (this.native && this.nativeHandle !== null) {
+      this.native.upsertTagSimilarity(this.nativeHandle, tagA, tagB);
+      return;
+    }
+    this.fallback!.upsertTagSimilarity(tagA, tagB);
   }
 }
