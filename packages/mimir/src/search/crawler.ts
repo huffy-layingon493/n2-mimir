@@ -41,9 +41,7 @@ export async function crawlPage(
       fetchedAt: new Date().toISOString(),
       contentLength: content.length,
     };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[mimir:crawler] Failed to crawl ${url}: ${message}`);
+  } catch {
     return null; // Network error, timeout, etc.
   }
 }

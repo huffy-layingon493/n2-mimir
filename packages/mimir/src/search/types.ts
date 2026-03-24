@@ -41,8 +41,8 @@ export interface VerifiedFact {
 export interface AutoStudyResult {
   readonly topic: string;
   readonly semanticMode?: boolean;
-  searchResults: number;
-  pagesCrawled: number;
+  searchResults: number;  // mutable: accumulated during pipeline
+  pagesCrawled: number;   // mutable: accumulated during pipeline
   claimsExtracted: number;
   factsVerified: number;
   factsPending: number;

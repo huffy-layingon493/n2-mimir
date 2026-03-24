@@ -1,4 +1,3 @@
 // converter barrel export
 export { generateOverlay } from './overlay.js';
-export { toArkRule } from './ark.js';
-export { toClothoWorkflow } from './clotho.js';
+// NOTE: toArkRule and toClothoWorkflow are Phase 4 skeletons — not exported until implemented

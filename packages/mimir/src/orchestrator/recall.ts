@@ -4,19 +4,7 @@ import type { MimirDatabase } from '../store/database.js';
 import type { RecallResult, ExperienceEntry, Insight, RankedExperience, TagFrequency } from '../types.js';
 import { classify, extractSearchTerms, decomposeQuery } from './classifier.js';
 import type { Embedder } from '../semantic/embedder.js';
-
-/** Compute cosine similarity between two vectors */
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length || a.length === 0) return 0;
-  let dot = 0, normA = 0, normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB);
-  return denom === 0 ? 0 : dot / denom;
-}
+import { cosineSimilarity } from '../utils/math.js';
 
 /** Recall confidence level — drives question sequence behavior (§8-9) */
 export type RecallConfidence = 'none' | 'ambiguous' | 'clear';

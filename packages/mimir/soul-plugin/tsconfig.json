@@ -9,13 +9,7 @@
     "outDir": "./dist",
     "rootDir": ".",
     "declaration": true,
-    "sourceMap": true,
-    "paths": {
-      "../src/*": ["../src/*"]
-    }
+    "sourceMap": true
   },
-  "include": ["*.ts"],
-  "references": [
-    { "path": "../" }
-  ]
+  "include": ["*.ts"]
 }

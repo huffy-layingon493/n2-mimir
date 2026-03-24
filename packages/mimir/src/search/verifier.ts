@@ -3,6 +3,7 @@
 import type { Claim, VerifiedFact, VerificationStatus } from './types.js';
 import { extractKeywords } from './extractor.js';
 import type { Embedder } from '../semantic/embedder.js';
+import { cosineSimilarity } from '../utils/math.js';
 
 /** Keyword similarity threshold for clustering */
 const KEYWORD_SIMILARITY_THRESHOLD = 0.5;
@@ -150,26 +151,9 @@ async function precomputeEmbeddings(
   }
 }
 
-/** Cosine similarity between two vectors */
-export function cosineSimilarity(
-  a: readonly number[],
-  b: readonly number[],
-): number {
-  if (!a || !b || a.length !== b.length) return 0;
-
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-
-  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-  return denominator < 1e-10 ? 0 : dotProduct / denominator;
-}
+// cosineSimilarity imported from '../utils/math.js' (shared utility)
+// Re-exported for barrel compatibility
+export { cosineSimilarity } from '../utils/math.js';
 
 /** Keyword-based similarity between two keyword sets (Jaccard-like) */
 export function keywordSimilarity(

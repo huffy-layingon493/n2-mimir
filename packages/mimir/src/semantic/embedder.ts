@@ -1,5 +1,5 @@
-// Embedder — Ollama/OpenAI 임베딩 API 클라이언트
-// endpoint 없으면 비활성 상태로 graceful 작동
+// Embedder — Ollama/OpenAI embedding API client
+// Gracefully inactive when no endpoint is configured
 
 import type { LlmConfig } from '../types.js';
 
@@ -10,11 +10,11 @@ export interface EmbeddingResult {
 }
 
 /**
- * Embedder — 텍스트를 임베딩 벡터로 변환.
+ * Embedder — converts text into embedding vectors.
  *
  * - Ollama: POST /api/embeddings { model, prompt }
  * - OpenAI: POST /v1/embeddings { model, input }
- * - endpoint 미설정 → isAvailable() = false → 호출 시 null 반환
+ * - No endpoint configured → isAvailable() = false → embed() returns null
  */
 export class Embedder {
   private readonly config: LlmConfig | undefined;
@@ -26,12 +26,12 @@ export class Embedder {
     this._available = !!(config?.endpoint && config.model);
   }
 
-  /** 시맨틱 검색 활성화 여부 */
+  /** Whether semantic search is enabled */
   isAvailable(): boolean {
     return this._available;
   }
 
-  /** 텍스트를 임베딩 벡터로 변환. 비활성이면 null 반환 */
+  /** Convert text to embedding vector. Returns null if inactive */
   async embed(text: string): Promise<EmbeddingResult | null> {
     if (!this._available || !this.config?.endpoint) return null;
 
@@ -55,7 +55,7 @@ export class Embedder {
     return this._cache.get(text) ?? null;
   }
 
-  /** 여러 텍스트를 한번에 임베딩 (동시성 제한: 3) */
+  /** Batch embed multiple texts (concurrency limited: 3) */
   async embedBatch(texts: readonly string[]): Promise<(EmbeddingResult | null)[]> {
     if (!this._available) return texts.map(() => null);
     const results: (EmbeddingResult | null)[] = new Array(texts.length).fill(null);
@@ -70,7 +70,7 @@ export class Embedder {
     return results;
   }
 
-  /** Provider별 API 호출 */
+  /** Call API based on provider */
   private async callApi(text: string): Promise<readonly number[]> {
     const { provider, model, endpoint } = this.config!;
 

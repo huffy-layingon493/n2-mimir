@@ -364,3 +364,6 @@ export type { SemanticResult } from './semantic/search.js';
 
 // Re-export search/auto-study types
 export type { AutoStudyResult, SearchConfig, SearchResult, VerifiedFact } from './search/types.js';
+
+// Re-export orchestrator utilities
+export { assemble } from './orchestrator/assembler.js';

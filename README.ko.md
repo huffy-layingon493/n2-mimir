@@ -1,6 +1,6 @@
 # 🧠 n2-mimir
 
-[![npm version](https://img.shields.io/badge/npm-v2.0.5-blue.svg)](https://www.npmjs.com/package/n2-mimir)
+[![npm version](https://img.shields.io/badge/npm-v2.0.7-blue.svg)](https://www.npmjs.com/package/n2-mimir)
 [![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg?color=blue)](https://www.npmjs.com/package/n2-mimir)
 [![License](https://img.shields.io/badge/license-Dual%20(Apache--2.0%20%2B%20Commercial)-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
@@ -8,7 +8,7 @@
 [![Rust](https://img.shields.io/badge/Rust-napi--rs-DEA584?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![ESM](https://img.shields.io/badge/ESM%20%2B%20CJS-dual%20export-yellow)](https://nodejs.org/api/esm.html)
-[![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/tests-119%20passed-brightgreen)](https://vitest.dev/)
 [![Zero Tokens](https://img.shields.io/badge/pipeline-0%20tokens-ff69b4)](https://github.com/choihyunsus/n2-mimir)
 
 **한국어** | [English](README.md)

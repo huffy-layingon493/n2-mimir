@@ -1,6 +1,6 @@
 # 🧠 n2-mimir
 
-[![npm version](https://img.shields.io/badge/npm-v2.0.5-blue.svg)](https://www.npmjs.com/package/n2-mimir)
+[![npm version](https://img.shields.io/badge/npm-v2.0.7-blue.svg)](https://www.npmjs.com/package/n2-mimir)
 [![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg?color=blue)](https://www.npmjs.com/package/n2-mimir)
 [![License](https://img.shields.io/badge/license-Dual%20(Apache--2.0%20%2B%20Commercial)-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
@@ -8,7 +8,7 @@
 [![Rust](https://img.shields.io/badge/Rust-napi--rs-DEA584?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![ESM](https://img.shields.io/badge/ESM%20%2B%20CJS-dual%20export-yellow)](https://nodejs.org/api/esm.html)
-[![Tests](https://img.shields.io/badge/tests-95%20passed-brightgreen)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/tests-119%20passed-brightgreen)](https://vitest.dev/)
 [![Zero Tokens](https://img.shields.io/badge/pipeline-0%20tokens-ff69b4)](https://github.com/choihyunsus/n2-mimir)
 
 **[한국어](README.ko.md)** | English
@@ -452,6 +452,24 @@ Auto Study: search 10 → crawl 5 → claims 56 → verified 4 (93% filter rate)
 Merge effect: 236t → 174t → 125t (progressive dedup)
 ```
 
+### Code Health (2026-03-24 Deep Audit)
+
+```
+Source files: 42 TypeScript (all under 500-line limit)
+Test suite:   119 tests (11 test files) — 95 unit + 24 simulation
+Type check:   tsc --noEmit 0 errors
+Build:        ESM 80KB + CJS 81KB (tsup, dual format)
+Bundle:       CJS require() ✅ | ESM import() ✅ | :memory: DB ✅
+
+Refactoring (v2.0.7):
+  database.ts:  713 → 239 lines (FallbackStore extracted: 339 lines)
+  cosineSimilarity: 3 duplicates → 1 shared util (utils/math.ts)
+  console.error: 2 removed (library should not pollute consumer logs)
+  skeleton exports: toArkRule/toClothoWorkflow removed from barrel
+  soul-plugin: ../src/ → 'n2-mimir' package import (npm-safe)
+  Korean comments: unified to English (international distribution)
+```
+
 ### Phase 3 — Advanced ✅
 > All moved to Phase 4 or completed
 
@@ -835,6 +853,16 @@ User: "Fix the database timeout bug"
 > 💡 **Setup**: Both are loaded via Soul. No extra config needed — they auto-detect each other.
 
 ## Changelog
+
+### v2.0.7 (2026-03-24) — Deep Audit + Production Hardening
+- **database.ts refactoring**: 713 → 239 lines + `database-fallback.ts` (339 lines)
+- **cosineSimilarity dedup**: 3 redundant copies → `utils/math.ts` single source
+- **console.error removed**: 2 occurrences in engine.ts/crawler.ts (library hygiene)
+- **skeleton export cleanup**: `toArkRule`, `toClothoWorkflow` removed from barrel (Phase 4 stubs)
+- **soul-plugin import fix**: `../src/` → `n2-mimir` package import (npm consumer safe)
+- **Korean comment unification**: embedder.ts, search.ts → English (international distribution)
+- **assemble export**: added to package barrel for external consumer access
+- **119 tests**: 95 unit + 24 simulation (E2E pipeline, FallbackStore, cosine util, bundle integrity)
 
 ### v2.0.5 (2026-03-24) — General-Purpose Distribution
 - **ESM + CJS dual export**: works with both `import` and `require`

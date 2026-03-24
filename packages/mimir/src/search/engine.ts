@@ -42,8 +42,7 @@ export async function search(
     }, cfg.timeout);
 
     if (!response.ok) {
-      console.error(`[mimir:search] Range ${range} failed: HTTP ${response.status}`);
-      continue;
+      continue; // Silent failure — expand to next date range
     }
 
     const html = await response.text();

@@ -1,11 +1,12 @@
-// Semantic search — cosine similarity 기반 벡터 검색
-// database에 저장된 임베딩과 쿼리 벡터를 비교하여 유사한 경험/인사이트를 찾음
+// Semantic search — cosine similarity based vector search
+// Searches stored embeddings in the database against a query vector
 
 import type { MimirDatabase } from '../store/database.js';
 import type { Embedder } from './embedder.js';
 import type { ExperienceEntry, Insight } from '../types.js';
+import { cosineSimilarity } from '../utils/math.js';
 
-/** 시맨틱 검색 결과 */
+/** Semantic search result */
 export interface SemanticResult {
   readonly sourceType: 'experience' | 'insight';
   readonly sourceId: string;
@@ -13,8 +14,8 @@ export interface SemanticResult {
 }
 
 /**
- * 시맨틱 검색: 쿼리 텍스트를 임베딩 → DB의 저장된 벡터들과 cosine similarity 비교.
- * Embedder가 비활성이면 빈 배열 반환.
+ * Semantic search: embed query text → compare with stored vectors via cosine similarity.
+ * Returns empty array if Embedder is inactive.
  */
 export async function semanticSearch(
   db: MimirDatabase,
@@ -27,8 +28,8 @@ export async function semanticSearch(
   const queryEmbedding = await embedder.embed(query);
   if (!queryEmbedding) return [];
 
-  // DB에서 모든 임베딩을 가져와서 cosine similarity 계산
-  // (소규모 DB에서는 충분, 대규모에서는 Rust core의 batch_cosine_similarity 사용)
+  // Fetch all embeddings from DB and compute cosine similarity
+  // (sufficient for small DBs, Rust core's batch_cosine_similarity for large-scale)
   const allEmbeddings = db.getAllEmbeddings();
   if (allEmbeddings.length === 0) return [];
 
@@ -38,7 +39,7 @@ export async function semanticSearch(
       sourceId: emb.sourceId,
       similarity: cosineSimilarity(queryEmbedding.vector, emb.vector),
     }))
-    .filter((r) => r.similarity > 0.3) // 최소 유사도 임계값
+    .filter((r) => r.similarity > 0.3) // minimum similarity threshold
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, limit);
 
@@ -46,8 +47,8 @@ export async function semanticSearch(
 }
 
 /**
- * 경험 또는 인사이트를 임베딩하고 DB에 저장.
- * 이미 임베딩이 있으면 스킵.
+ * Embed an experience or insight and store in DB.
+ * Skips if embedding already exists.
  */
 export async function embedAndStore(
   db: MimirDatabase,
@@ -58,7 +59,7 @@ export async function embedAndStore(
 ): Promise<boolean> {
   if (!embedder.isAvailable()) return false;
 
-  // 이미 임베딩이 있는지 확인
+  // Check if embedding already exists
   const existing = db.getEmbedding(sourceType, sourceId);
   if (existing) return false;
 
@@ -70,8 +71,8 @@ export async function embedAndStore(
 }
 
 /**
- * 경험을 임베딩용 텍스트로 변환.
- * context + action + outcome을 결합하여 의미 있는 벡터 생성.
+ * Convert experience to text for embedding.
+ * Combines context + action + outcome for meaningful vector generation.
  */
 export function experienceToText(exp: ExperienceEntry): string {
   const parts = [exp.context, exp.action, exp.outcome];
@@ -79,25 +80,8 @@ export function experienceToText(exp: ExperienceEntry): string {
   return parts.join(' ');
 }
 
-/** 인사이트를 임베딩용 텍스트로 변환 */
+/** Convert insight to text for embedding */
 export function insightToText(insight: Insight): string {
   return insight.description;
 }
 
-/** Cosine similarity 계산 (TypeScript fallback — Rust core 없을 때 사용) */
-function cosineSimilarity(a: readonly number[], b: readonly number[]): number {
-  if (a.length !== b.length || a.length === 0) return 0;
-
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-
-  const denom = Math.sqrt(normA) * Math.sqrt(normB);
-  return denom < 1e-10 ? 0 : dot / denom;
-}

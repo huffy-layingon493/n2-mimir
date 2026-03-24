@@ -1,8 +1,8 @@
 // soul-plugin/hooks.ts — Soul MCP hook integration (architecture.md 5-3)
 // n2_boot → activate() | n2_work_end → digest()
 
-import { Mimir } from '../src/index.js';
-import type { MimirConfig, AssemblyResult } from '../src/types.js';
+import { Mimir } from 'n2-mimir';
+import type { MimirConfig, AssemblyResult } from 'n2-mimir';
 
 /**
  * SoulPlugin — connects Mímir to Soul's boot/end lifecycle.
@@ -41,7 +41,7 @@ export class SoulPlugin {
 
     // If custom budget, use assembler directly
     if (tokenBudget) {
-      const { assemble } = await import('../src/orchestrator/assembler.js');
+      const { assemble } = await import('n2-mimir');
       return assemble(result, tokenBudget);
     }
 
@@ -122,8 +122,8 @@ function convertSessionToExperiences(
   project: string,
   agent: string,
   data: SessionData,
-): Array<import('../src/types.js').ExperienceInput> {
-  const experiences: Array<import('../src/types.js').ExperienceInput> = [];
+): Array<import('n2-mimir').ExperienceInput> {
+  const experiences: Array<import('n2-mimir').ExperienceInput> = [];
 
   // Summary → pattern experience
   if (data.summary) {
