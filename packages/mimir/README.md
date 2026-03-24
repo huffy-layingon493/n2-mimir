@@ -896,18 +896,11 @@ This project is **dual-licensed**:
 
 See [LICENSE](./LICENSE) for full details.
 
-## 💖 Support This Project
+## 💖 Sponsors
 
-If Mimir helps your AI work smarter, consider supporting development:
+No coffee? A star is fine too ☕→⭐
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/choihyunsus)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/nton2)
-
-> No coffee? A star is fine too ☕ → ⭐
-
-## ⭐ Star History
-
-If you find Mimir useful, please give it a star! It helps others discover it.
+> Become a sponsor → [GitHub Sponsors](https://github.com/sponsors/choihyunsus)
 
 ---
 

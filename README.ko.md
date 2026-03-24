@@ -1,15 +1,9 @@
 # 🧠 n2-mimir
 
-[![npm version](https://img.shields.io/badge/npm-v2.0.7-blue.svg)](https://www.npmjs.com/package/n2-mimir)
-[![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg?color=blue)](https://www.npmjs.com/package/n2-mimir)
+[![npm version](https://img.shields.io/npm/v/n2-mimir.svg)](https://www.npmjs.com/package/n2-mimir)
 [![License](https://img.shields.io/badge/license-Dual%20(Apache--2.0%20%2B%20Commercial)-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-napi--rs-DEA584?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![ESM](https://img.shields.io/badge/ESM%20%2B%20CJS-dual%20export-yellow)](https://nodejs.org/api/esm.html)
-[![Tests](https://img.shields.io/badge/tests-119%20passed-brightgreen)](https://vitest.dev/)
-[![Zero Tokens](https://img.shields.io/badge/pipeline-0%20tokens-ff69b4)](https://github.com/choihyunsus/n2-mimir)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
+[![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg)](https://www.npmjs.com/package/n2-mimir)
 
 **한국어** | [English](README.md)
 
@@ -299,14 +293,11 @@ module.exports = {
 
 자세한 내용은 [LICENSE](./LICENSE)를 참조하세요.
 
-## 💖 프로젝트 후원
+## 💖 후원
 
-Mimir가 AI 작업에 도움이 되셨다면, 개발을 후원해주세요:
+커피 없으면 스타라도 ☕→⭐
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/choihyunsus)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/nton2)
-
-> 이래도 커피 한 잔 얻어마실 자격이 없을까요? ☕
+> 후원하기 → [GitHub Sponsors](https://github.com/sponsors/choihyunsus)
 
 ---
 

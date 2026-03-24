@@ -1,15 +1,9 @@
 # 🧠 n2-mimir
 
-[![npm version](https://img.shields.io/badge/npm-v2.0.7-blue.svg)](https://www.npmjs.com/package/n2-mimir)
-[![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg?color=blue)](https://www.npmjs.com/package/n2-mimir)
+[![npm version](https://img.shields.io/npm/v/n2-mimir.svg)](https://www.npmjs.com/package/n2-mimir)
 [![License](https://img.shields.io/badge/license-Dual%20(Apache--2.0%20%2B%20Commercial)-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-napi--rs-DEA584?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-FTS5-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![ESM](https://img.shields.io/badge/ESM%20%2B%20CJS-dual%20export-yellow)](https://nodejs.org/api/esm.html)
-[![Tests](https://img.shields.io/badge/tests-119%20passed-brightgreen)](https://vitest.dev/)
-[![Zero Tokens](https://img.shields.io/badge/pipeline-0%20tokens-ff69b4)](https://github.com/choihyunsus/n2-mimir)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
+[![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg)](https://www.npmjs.com/package/n2-mimir)
 
 **[한국어](README.ko.md)** | English
 
@@ -924,18 +918,11 @@ This project is **dual-licensed**:
 
 See [LICENSE](./LICENSE) for full details.
 
-## 💖 Support This Project
+## 💖 Sponsors
 
-If Mimir helps your AI work smarter, consider supporting development:
+No coffee? A star is fine too ☕→⭐
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/choihyunsus)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/nton2)
-
-> After all this, don't I deserve at least a cup of coffee? ☕
-
-## ⭐ Star History
-
-If you find Mimir useful, please give it a star! It helps others discover it.
+> Become a sponsor → [GitHub Sponsors](https://github.com/sponsors/choihyunsus)
 
 ---
 
