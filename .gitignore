@@ -38,6 +38,8 @@ coverage/
 # Internal docs (not for distribution)
 HANDOFF-*.md
 REFLECTION-*.md
+research/
+docs/architecture.md
 docs/WORK-LOG-*.md
 docs/redesign-*.md
 docs/architecture-evolution-*.md
