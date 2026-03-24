@@ -194,12 +194,12 @@ STUDYING → IDLE : on n2_mimir_study_end
 Mimir's learning follows the same path as human expertise:
 
 ```
-경험 수집 (Experience)
-  → 패턴 감지 (Pattern Detection)
-    → 통찰 생성 (Insight Generation)
-      → 반복 검증 (Voting + Merging)
-        → 졸업 (Graduation)
-          → 규칙 강제 (Ark Enforcement) ← Clotho
+Experience Collection
+  → Pattern Detection
+    → Insight Generation
+      → Voting + Merging
+        → Graduation
+          → Ark Enforcement ← Clotho
 ```
 
 ### Real World Example — "How Rose Learned to Follow Boot Order"
@@ -252,7 +252,7 @@ When an insight **graduates** (importance ≥ 7, verified multiple times), Cloth
   @rule BootOrder {
     match n2_work_start {
       require: state.BootSequence == "READY"
-      message: "n2_coding을 먼저 호출하세요"
+      message: "Call n2_coding first"
     }
   }
 
@@ -285,11 +285,11 @@ Boot (automatic, every session):
 
 Work Start (automatic, per task):
   → FTS5 search by task keywords (300t budget)
-  → "이미지 생성" task → recalls ComfyUI experiences
+  → "image generation" task → recalls ComfyUI experiences
 
 Manual Query (on demand):
   → n2_mimir_overlay(topic) → natural language recall
-  → "김치찌개" → all related experiences surface
+  → "kimchi stew recipe" → all related experiences surface
 
 Everything else:
   → Sleeps in DB → wakes up only when searched
@@ -560,7 +560,7 @@ Saved to DB:     1               2                  +100% 🔥
 Rejection rate:  98%             93%                -5%
 ```
 
-> **Conclusion**: For general/hobby topics, semantic hybrid mode **doubles** the saved experiences by understanding that "에어브러시 도색" ≈ "airbrush painting" ≈ "spray painting" are the same claim, even across languages. For tech docs, the difference is minimal since terminology is already standardized.
+> **Conclusion**: For general/hobby topics, semantic hybrid mode **doubles** the saved experiences by understanding that diverse expressions like "airbrush painting" ≈ "spray painting" are the same claim, even across languages. For tech docs, the difference is minimal since terminology is already standardized.
 
 #### Token Cost Comparison
 

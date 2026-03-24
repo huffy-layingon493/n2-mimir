@@ -32,7 +32,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/n2-project/n2-mimir"
+    "url": "https://github.com/choihyunsus/n2-mimir"
   },
   "engines": {
     "node": ">=20.0.0"
