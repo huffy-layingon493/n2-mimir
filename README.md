@@ -931,7 +931,7 @@ If Mimir helps your AI work smarter, consider supporting development:
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?style=for-the-badge&logo=github)](https://github.com/sponsors/choihyunsus)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-☕-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/nton2)
 
-> 이래도 커피 한 잔 얻어마실 자격이 없을까요? ☕
+> After all this, don't I deserve at least a cup of coffee? ☕
 
 ## ⭐ Star History
 
