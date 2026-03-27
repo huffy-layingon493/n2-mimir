@@ -1,4 +1,4 @@
-# 🧠 n2-mimir
+# n2-mimir
 
 [![npm version](https://img.shields.io/npm/v/n2-mimir.svg)](https://www.npmjs.com/package/n2-mimir)
 [![License](https://img.shields.io/badge/license-Dual%20(Apache--2.0%20%2B%20Commercial)-blue.svg)](LICENSE)
@@ -7,7 +7,7 @@
 
 **한국어** | [English](README.md)
 
-> **AI 경험 학습 엔진** — 경험에서 배우고, 행동을 바꿉니다. 북유럽 신화의 지혜의 수호자 미미르의 이름을 따왔습니다. 🧠
+> **AI 경험 학습 엔진** — 경험에서 배우고, 행동을 바꿉니다. 북유럽 신화의 지혜의 수호자 미미르의 이름을 따왔습니다. 
 
 ## Mimir란?
 
@@ -26,39 +26,39 @@ Mimir는 이 고리를 끊습니다:
 
 ```
 Before (토큰 소모형):
-  📄 GEMINI.md (3000+ 토큰) → AI가 부팅 시 읽음 → 무시할 수 있음 → 매 세션 반복
+ GEMINI.md (3000+ 토큰) → AI가 부팅 시 읽음 → 무시할 수 있음 → 매 세션 반복
 
 After (시스템 강제, 0 토큰):
-  🛡️ Ark    → 규칙을 상태 머신으로 컴파일. AI가 우회 불가. 읽을 필요 없음.
-  🧵 Clotho → 검증된 인사이트가 자동으로 규칙이 됨. 수동 작성 불필요.
-  🧠 Mimir  → 적시에 경험을 회상. 반복 설명 불필요.
+ Ark → 규칙을 상태 머신으로 컴파일. AI가 우회 불가. 읽을 필요 없음.
+ Clotho → 검증된 인사이트가 자동으로 규칙이 됨. 수동 작성 불필요.
+ Mimir → 적시에 경험을 회상. 반복 설명 불필요.
 ```
 
 ## 아키텍처
 
 ```
 ┌─────────────────────────────────────┐
-│            n2-mimir                 │
+│ n2-mimir │
 ├──────────┬──────────────────────────┤
-│ Rust Core│  TypeScript Brain        │
-│ (napi-rs)│                          │
-│          │  collector/ → normalizer │
-│ SQLite   │  analyzer/  → patterns   │
-│ FTS5     │  insight/   → generator  │
-│ Vector   │  converter/ → overlay    │
-│          │  tracker/   → scoring    │
-│          │  orchestrator/ → recall  │
+│ Rust Core│ TypeScript Brain │
+│ (napi-rs)│ │
+│ │ collector/ → normalizer │
+│ SQLite │ analyzer/ → patterns │
+│ FTS5 │ insight/ → generator │
+│ Vector │ converter/ → overlay │
+│ │ tracker/ → scoring │
+│ │ orchestrator/ → recall │
 └──────────┴──────────────────────────┘
 ```
 
 - **Rust Core**: SQLite, FTS5 전문 검색, SIMD 벡터 연산 (성능)
 - **TS Brain**: 패턴 분석, 인사이트 생성, 토큰 예산 기반 오버레이
 
-> 💡 **Rust 없어도 괜찮습니다.** Mimir는 자동으로 `better-sqlite3`로 폴백합니다. 모든 기능이 작동합니다 — SIMD 벡터 가속만 빠집니다.
+> **Rust 없어도 괜찮습니다.** Mimir는 자동으로 `better-sqlite3`로 폴백합니다. 모든 기능이 작동합니다 — SIMD 벡터 가속만 빠집니다.
 
-## 📦 설치
+## 설치
 
-> 💡 **최고의 설치 방법**: AI에게 *"n2-mimir 설치해줘"* 라고 말하세요. 알아서 합니다. 🧠
+> **최고의 설치 방법**: AI에게 *"n2-mimir 설치해줘"* 라고 말하세요. 알아서 합니다. 
 
 ```bash
 npm install n2-mimir
@@ -87,23 +87,23 @@ const mimir = new Mimir({ dbPath: './mimir.db' });
 
 // 경험 추가 — agent/project는 선택사항 (기본값: 'default')
 mimir.addExperience({
-  type: 'correction',
-  category: 'workflow',
-  context: '터미널 작업',
-  action: '디렉토리 이름에 특수문자 사용',
-  outcome: '터미널 명령어가 전부 멈춤',
-  correction: '디렉토리 이름은 [a-z0-9-]만 사용',
+ type: 'correction',
+ category: 'workflow',
+ context: '터미널 작업',
+ action: '디렉토리 이름에 특수문자 사용',
+ outcome: '터미널 명령어가 전부 멈춤',
+ correction: '디렉토리 이름은 [a-z0-9-]만 사용',
 });
 
 // 멀티 에이전트 환경에서는 agent/project 지정
 mimir.addExperience({
-  agent: 'rose',
-  project: 'my-project',
-  type: 'success',
-  category: 'coding',
-  context: 'React 최적화',
-  action: 'React.memo를 리스트 아이템에 적용',
-  outcome: '렌더링 시간 60% 감소',
+ agent: 'rose',
+ project: 'my-project',
+ type: 'success',
+ category: 'coding',
+ context: 'React 최적화',
+ action: 'React.memo를 리스트 아이템에 적용',
+ outcome: '렌더링 시간 60% 감소',
 });
 
 // 관련 경험 회상
@@ -129,7 +129,7 @@ mimir.close();
 // soul/lib/config.js에서 설정 — 추가 코드 불필요.
 ```
 
-## 📚 API 레퍼런스
+## API 레퍼런스
 
 ### 경험 수집
 
@@ -183,29 +183,29 @@ Mimir의 학습은 인간의 전문성 습득과 같은 경로를 따릅니다:
 
 ```
 경험 수집 (Experience)
-  → 패턴 감지 (Pattern Detection)
-    → 통찰 생성 (Insight Generation)
-      → 반복 검증 (Voting + Merging)
-        → 졸업 (Graduation)
-          → 규칙 강제 (Ark Enforcement) ← Clotho
+ → 패턴 감지 (Pattern Detection)
+ → 통찰 생성 (Insight Generation)
+ → 반복 검증 (Voting + Merging)
+ → 졸업 (Graduation)
+ → 규칙 강제 (Ark Enforcement) ← Clotho
 ```
 
 ### 실제 사례 — "Rose가 부팅 순서를 학습한 과정"
 
 ```
-Day 1:  Rose가 부팅 후 n2_coding() 건너뜀
-        → 사용자 수정 → Mimir가 수정 경험 기록
+Day 1: Rose가 부팅 후 n2_coding() 건너뜀
+ → 사용자 수정 → Mimir가 수정 경험 기록
 
-Day 2:  또 건너뜀
-        → 패턴 감지 → 인사이트 생성: "n2_boot 후 반드시 n2_coding 호출"
-        → importance: 2
+Day 2: 또 건너뜀
+ → 패턴 감지 → 인사이트 생성: "n2_boot 후 반드시 n2_coding 호출"
+ → importance: 2
 
 Day 3-5: 계속 잊어먹음
-        → 매 수정 = 기존 인사이트 upvote
-        → importance: 2 → 6 → 12 → 20 → 34
+ → 매 수정 = 기존 인사이트 upvote
+ → importance: 2 → 6 → 12 → 20 → 34
 
 Day 6+: importance 34 = 최우선 인사이트
-        → 매 부팅마다 ⚠️ 주입 → 더 이상 안 잊어먹음 ✅
+ → 매 부팅마다 주입 → 더 이상 안 잊어먹음 
 ```
 
 ## 토큰 비용
@@ -219,71 +219,71 @@ Day 6+: importance 34 = 최우선 인사이트
 
 **모든 DB 연산 (검색, 태그, 투표, 점수) = 0 토큰.** 전부 로컬 SQLite에서 실행됩니다.
 
-## 🔧 설정
+## 설정
 
 ```javascript
 // soul/lib/config.local.js
 module.exports = {
-    MIMIR: {
-        tokenBudget: 500,          // 경험 오버레이 최대 토큰
-        halfLife: 14,              // 중요도 반감기 (일)
+ MIMIR: {
+ tokenBudget: 500, // 경험 오버레이 최대 토큰
+ halfLife: 14, // 중요도 반감기 (일)
 
-        // 시맨틱 검색 활성화 (Ollama 필요)
-        llm: {
-            provider: 'ollama',
-            model: 'nomic-embed-text',
-            endpoint: 'http://localhost:11434',
-        },
-    },
+ // 시맨틱 검색 활성화 (Ollama 필요)
+ llm: {
+ provider: 'ollama',
+ model: 'nomic-embed-text',
+ endpoint: 'http://localhost:11434',
+ },
+ },
 };
 ```
 
-## 🌐 N2 생태계 — 함께하면 더 강력합니다
+## N2 생태계 — 함께하면 더 강력합니다
 
 | 패키지 | 역할 | npm | 단독 사용 |
 |--------|------|-----|:---------:|
-| **QLN** | 도구 라우팅 (1000+ 도구 → 1 라우터) | `n2-qln` | ✅ |
-| **Soul** | 에이전트 기억 & 세션 관리 | `n2-soul` | ✅ |
-| **Ark** | 보안 정책 & 코드 검증 | `n2-ark` | ✅ |
-| **Arachne** | 코드 컨텍스트 자동 조립 | `n2-arachne` | ✅ |
-| **Mimir** | 경험 학습 엔진 🧠 | `n2-mimir` | ✅ |
-| **Clotho** | 인사이트 → 규칙 자동 생성 🧵 | `n2-clotho` | ✅ |
+| **QLN** | 도구 라우팅 (1000+ 도구 → 1 라우터) | `n2-qln` | |
+| **Soul** | 에이전트 기억 & 세션 관리 | `n2-soul` | |
+| **Ark** | 보안 정책 & 코드 검증 | `n2-ark` | |
+| **Arachne** | 코드 컨텍스트 자동 조립 | `n2-arachne` | |
+| **Mimir** | 경험 학습 엔진 | `n2-mimir` | |
+| **Clotho** | 인사이트 → 규칙 자동 생성 | `n2-clotho` | |
 
 > 모든 패키지는 **100% 단독 사용 가능**합니다. 하지만 조합하면 마법이 일어납니다.
 
-### 🔗 시너지: 자기 개선 루프
+### 시너지: 자기 개선 루프
 
 ```
 사용자가 AI와 작업
-     │
-     ▼
+ │
+ ▼
 ┌─── Soul (기억) ──────────────────────────────────┐
-│ 세션, 핸드오프, 결정 기록                         │
-│ → work_start 시 Mimir recall 트리거              │
-│ → work_end 시 Mimir digest 트리거                │
+│ 세션, 핸드오프, 결정 기록 │
+│ → work_start 시 Mimir recall 트리거 │
+│ → work_end 시 Mimir digest 트리거 │
 └───────────────┬──────────────────────────────────┘
-                │
-                ▼
+ │
+ ▼
 ┌─── Mimir (학습) ────────────────────────────────┐
-│ 경험 수집 → 인사이트 생성                        │
-│ → importance 30+ → 졸업 → Clotho로              │
+│ 경험 수집 → 인사이트 생성 │
+│ → importance 30+ → 졸업 → Clotho로 │
 └───────────────┬──────────────────────────────────┘
-                │
-                ▼
+ │
+ ▼
 ┌─── Clotho (규칙 자동화) ────────────────────────┐
-│ 졸업 인사이트 → .n2 규칙 파일 (0 토큰)           │
-│ → Ark가 부팅 시 로드                             │
+│ 졸업 인사이트 → .n2 규칙 파일 (0 토큰) │
+│ → Ark가 부팅 시 로드 │
 └───────────────┬──────────────────────────────────┘
-                │
-                ▼
+ │
+ ▼
 ┌─── Ark (강제) ──────────────────────────────────┐
-│ 상태 머신: .n2 컴파일 → 위반 차단               │
-│ → 시스템 레벨 강제, AI 우회 불가                 │
-│ → 더 많이 일할수록 → 더 똑똑한 규칙             │
+│ 상태 머신: .n2 컴파일 → 위반 차단 │
+│ → 시스템 레벨 강제, AI 우회 불가 │
+│ → 더 많이 일할수록 → 더 똑똑한 규칙 │
 └─────────────────────────────────────────────────┘
 ```
 
-## 📄 라이선스
+## 라이선스
 
 | 용도 | 라이선스 | 비용 |
 |------|----------|------|
@@ -293,14 +293,14 @@ module.exports = {
 
 자세한 내용은 [LICENSE](./LICENSE)를 참조하세요.
 
-## 💖 후원
+## 후원
 
-커피 없으면 스타라도 ☕→⭐
+커피 없으면 스타라도 →
 
 > 후원하기 → [GitHub Sponsors](https://github.com/sponsors/choihyunsus)
 
 ---
 
-🌐 [nton2.com](https://nton2.com) · 📦 [npm](https://www.npmjs.com/package/n2-mimir) · 📧 lagi0730@gmail.com
+ [nton2.com](https://nton2.com) · [npm](https://www.npmjs.com/package/n2-mimir) · lagi0730@gmail.com
 
-*Mimir — 지혜의 수호자. 경험에서 배우는 당신의 AI.* 🧠
+*Mimir — 지혜의 수호자. 경험에서 배우는 당신의 AI.* 

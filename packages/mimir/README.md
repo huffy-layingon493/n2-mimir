@@ -1,4 +1,4 @@
-# 🧠 n2-mimir
+# n2-mimir
 
 [![npm version](https://img.shields.io/badge/npm-v2.0.5-blue.svg)](https://www.npmjs.com/package/n2-mimir)
 [![npm downloads](https://img.shields.io/npm/dm/n2-mimir.svg?color=blue)](https://www.npmjs.com/package/n2-mimir)
@@ -13,17 +13,17 @@
 
 **[한국어](README.ko.md)** | English
 
-> **AI Experience Learning Engine** — learns from experience, changes behavior. Named after the Norse guardian of wisdom. 🧠
+> **AI Experience Learning Engine** — learns from experience, changes behavior. Named after the Norse guardian of wisdom. 
 
 ## What is Mimir?
 
 AI agents remember, but they don't learn. They make the same mistakes every session.
 
-### 🧠 Mimir Standalone
+### Mimir Standalone
 
 ![What is Mimir? — AI makes the same mistake every session. Mimir remembers past experiences and prevents repeating errors.](docs/mimir-standalone-comic.png)
 
-### 🔗 Soul + Mimir + Clotho + Ark Synergy
+### Soul + Mimir + Clotho + Ark Synergy
 
 ![The Self-Improving Loop — Soul tracks sessions, Mimir learns patterns, Clotho generates rules, Ark enforces them. The AI improves itself automatically.](docs/mimir-soul-synergy-comic.png)
 
@@ -40,13 +40,13 @@ Traditional AI agent setup relies on massive rule documents (constitution files,
 
 ```
 Before (Token-heavy):
-  📄 GEMINI.md (3000+ tokens) → AI reads at boot → may ignore → repeat every session
-  📄 Rules scattered in prompts → AI forgets → user repeats same instructions
+ GEMINI.md (3000+ tokens) → AI reads at boot → may ignore → repeat every session
+ Rules scattered in prompts → AI forgets → user repeats same instructions
 
 After (System-enforced, 0 tokens):
-  🛡️ Ark    → Rules compiled to state machine. AI CAN'T bypass. No reading needed.
-  🧵 Clotho → Proven insights auto-become rules. No manual writing needed.
-  🧠 Mimir  → Experience recall at the right time. No repetition needed.
+ Ark → Rules compiled to state machine. AI CAN'T bypass. No reading needed.
+ Clotho → Proven insights auto-become rules. No manual writing needed.
+ Mimir → Experience recall at the right time. No repetition needed.
 ```
 
 **Result**: AI constitution files become obsolete. The system enforces, learns, and adapts — not the AI reading a document.
@@ -56,28 +56,28 @@ After (System-enforced, 0 tokens):
 These three systems form a self-reinforcing loop:
 
 ```
-🛡️ Ark (Backbone)
-  → State machine: tracks WORKING / IDLE / BOOTING
-  → Rule enforcement: blocks violations, warns on soft rules
-  → Context signal: Mimir uses WORKING state to filter noise
+ Ark (Backbone)
+ → State machine: tracks WORKING / IDLE / BOOTING
+ → Rule enforcement: blocks violations, warns on soft rules
+ → Context signal: Mimir uses WORKING state to filter noise
 
-🧠 Mimir (Brain)
-  → Experience collection: only during WORKING state
-  → Insight generation: patterns from repeated experiences
-  → Recall: inject relevant knowledge at the right time
+ Mimir (Brain)
+ → Experience collection: only during WORKING state
+ → Insight generation: patterns from repeated experiences
+ → Recall: inject relevant knowledge at the right time
 
-🧵 Clotho (Automation)
-  → Graduated insights → auto-generate .n2 rules
-  → Rules loaded by Ark → system-level enforcement
-  → Zero human intervention, zero tokens
+ Clotho (Automation)
+ → Graduated insights → auto-generate .n2 rules
+ → Rules loaded by Ark → system-level enforcement
+ → Zero human intervention, zero tokens
 ```
 
 ```
 The Loop:
-  Ark tracks state → Mimir collects during WORKING
-    → Mimir generates insights → insights graduate
-      → Clotho creates .n2 rules → Ark loads them
-        → Ark enforces new rules → repeat
+ Ark tracks state → Mimir collects during WORKING
+ → Mimir generates insights → insights graduate
+ → Clotho creates .n2 rules → Ark loads them
+ → Ark enforces new rules → repeat
 ```
 
 **Self-improving system**: the more it works, the smarter it gets, the stricter it becomes — automatically.
@@ -87,49 +87,49 @@ The Loop:
 Each component works alone, but the synergy is exponential:
 
 ```
-Mimir only        → "Experience storage works, but no auto-collection"
-                     → You need Soul
+Mimir only → "Experience storage works, but no auto-collection"
+ → You need Soul
 
-+ Soul             → "Auto-collection works, but no rule enforcement"
-                     → You need Ark
++ Soul → "Auto-collection works, but no rule enforcement"
+ → You need Ark
 
-+ Ark              → "Rules are enforced, but I have to write them manually"
-                     → You need Clotho
++ Ark → "Rules are enforced, but I have to write them manually"
+ → You need Clotho
 
-+ Clotho           → "Everything is automatic. It learns, enforces,
-                      and improves itself — without me doing anything."
-                     → n2-3.1-bw full package 🔥
++ Clotho → "Everything is automatic. It learns, enforces,
+ and improves itself — without me doing anything."
+ → n2-3.1-bw full package 
 ```
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────┐
-│            n2-mimir                 │
+│ n2-mimir │
 ├──────────┬──────────────────────────┤
-│ Rust Core│  TypeScript Brain        │
-│ (napi-rs)│                          │
-│          │  collector/ → normalizer │
-│ SQLite   │  analyzer/  → patterns   │
-│ FTS5     │  insight/   → generator  │
-│ Vector   │  converter/ → overlay    │
-│          │  tracker/   → scoring    │
-│          │  orchestrator/ → recall  │
+│ Rust Core│ TypeScript Brain │
+│ (napi-rs)│ │
+│ │ collector/ → normalizer │
+│ SQLite │ analyzer/ → patterns │
+│ FTS5 │ insight/ → generator │
+│ Vector │ converter/ → overlay │
+│ │ tracker/ → scoring │
+│ │ orchestrator/ → recall │
 └──────────┴──────────────────────────┘
 ```
 
 - **Rust Core**: SQLite, FTS5 full-text search, SIMD vector ops (performance)
 - **TS Brain**: Pattern analysis, insight generation, token-budgeted overlay
 
-### ⚠️ Rust Native — Node Version Compatibility
+### Rust Native — Node Version Compatibility
 
 The pre-built `.node` binary is **tied to the Node.js ABI version** it was compiled with. If your Node version differs, the binary will **silently fail** (hang or crash), and Mimir will fall back to better-sqlite3.
 
 | Built with | Works on | Status |
 |------------|----------|:------:|
-| Node v24 (modules v137) | Node v24.x | ✅ Native |
-| Node v24 (modules v137) | Node v22/v20/v18 | ❌ Fallback |
-| Node v22 (modules v131) | Node v22.x | ✅ Native |
+| Node v24 (modules v137) | Node v24.x | Native |
+| Node v24 (modules v137) | Node v22/v20/v18 | Fallback |
+| Node v22 (modules v131) | Node v22.x | Native |
 
 **Check your status:**
 ```bash
@@ -144,7 +144,7 @@ cargo build --release
 copy target\release\n2_mimir_core.dll <soul_path>/lib/mimir/n2_mimir_core.win32-x64.node
 ```
 
-> 💡 **No Rust? No problem.** Mimir automatically falls back to `better-sqlite3` (pure JS). All features work — just without SIMD vector acceleration (~15-20x slower on cosine similarity at 100K+ records).
+> **No Rust? No problem.** Mimir automatically falls back to `better-sqlite3` (pure JS). All features work — just without SIMD vector acceleration (~15-20x slower on cosine similarity at 100K+ records).
 
 ## Soul Integration (How it works)
 
@@ -152,20 +152,20 @@ Mimir integrates into the Soul lifecycle as a native learning module:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Boot (n2_boot)                                     │
-│  → mimirActivate: project insights injection (500t) │
+│ Boot (n2_boot) │
+│ → mimirActivate: project insights injection (500t) │
 ├─────────────────────────────────────────────────────┤
-│  Work Start (n2_work_start)                         │
-│  → mimirRecall: task-based experience recall (300t) │
+│ Work Start (n2_work_start) │
+│ → mimirRecall: task-based experience recall (300t) │
 ├─────────────────────────────────────────────────────┤
-│  Work End (n2_work_end)                             │
-│  → mimirDigest: experience collection               │
-│  → mergeInsights: duplicate consolidation            │
-│  → insight generation + graduation                   │
+│ Work End (n2_work_end) │
+│ → mimirDigest: experience collection │
+│ → mergeInsights: duplicate consolidation │
+│ → insight generation + graduation │
 ├─────────────────────────────────────────────────────┤
-│  Study (manual/auto learning)                       │
-│  → study_start → study_add (repeat) → study_end    │
-│  → Ark contract enforces sequence                    │
+│ Study (manual/auto learning) │
+│ → study_start → study_add (repeat) → study_end │
+│ → Ark contract enforces sequence │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -195,11 +195,11 @@ Mimir's learning follows the same path as human expertise:
 
 ```
 Experience Collection
-  → Pattern Detection
-    → Insight Generation
-      → Voting + Merging
-        → Graduation
-          → Ark Enforcement ← Clotho
+ → Pattern Detection
+ → Insight Generation
+ → Voting + Merging
+ → Graduation
+ → Ark Enforcement ← Clotho
 ```
 
 ### Real World Example — "How Rose Learned to Follow Boot Order"
@@ -207,32 +207,32 @@ Experience Collection
 This is a real case from Mimir's first week of operation:
 
 ```
-Day 1:  Rose skips n2_coding() after boot
-        → User corrects → Mimir records correction experience
+Day 1: Rose skips n2_coding() after boot
+ → User corrects → Mimir records correction experience
 
-Day 2:  Rose skips again
-        → Mimir records another correction → detects pattern
-        → Generates insight: "MUST call n2_coding after n2_boot"
-        → importance: 2
+Day 2: Rose skips again
+ → Mimir records another correction → detects pattern
+ → Generates insight: "MUST call n2_coding after n2_boot"
+ → importance: 2
 
 Day 3-5: Rose keeps forgetting
-        → Each correction = upvote on existing insight
-        → importance climbs: 2 → 6 → 12 → 20 → 34
+ → Each correction = upvote on existing insight
+ → importance climbs: 2 → 6 → 12 → 20 → 34
 
 Day 6+: importance 34 = top priority insight
-        → Injected as ⚠️ warning at every boot
-        → Rose stops forgetting
-        → Boot order is now muscle memory ✅
+ → Injected as warning at every boot
+ → Rose stops forgetting
+ → Boot order is now muscle memory 
 ```
 
 ```
-Before Mimir:  📄 "Don't forget n2_coding" written in rules doc
-               → AI reads 3000 tokens → may still ignore → repeat
+Before Mimir: "Don't forget n2_coding" written in rules doc
+ → AI reads 3000 tokens → may still ignore → repeat
 
-After Mimir:   🧠 AI experienced consequences 10+ times
-               → Pattern auto-detected → importance 34
-               → 5 tokens injected at boot → never forgets
-               → Eventually graduates → Ark blocks violations (0 tokens)
+After Mimir: AI experienced consequences 10+ times
+ → Pattern auto-detected → importance 34
+ → 5 tokens injected at boot → never forgets
+ → Eventually graduates → Ark blocks violations (0 tokens)
 ```
 
 **Same thing happens with humans**: make a mistake → get corrected → repeat → eventually it's habit. Mimir automates this for AI.
@@ -242,21 +242,21 @@ After Mimir:   🧠 AI experienced consequences 10+ times
 When an insight **graduates** (importance ≥ 7, verified multiple times), Clotho automatically generates Ark `.n2` contracts:
 
 ```
-📖 Insight (graduated):
-  "Boot order: n2_boot → n2_coding → n2_work_start. Never skip."
-  importance: 7, status: graduated
+ Insight (graduated):
+ "Boot order: n2_boot → n2_coding → n2_work_start. Never skip."
+ importance: 7, status: graduated
 
-  ↓ Clotho auto-generates ↓
+ ↓ Clotho auto-generates ↓
 
-📜 Ark Contract (.n2):
-  @rule BootOrder {
-    match n2_work_start {
-      require: state.BootSequence == "READY"
-      message: "Call n2_coding first"
-    }
-  }
+ Ark Contract (.n2):
+ @rule BootOrder {
+ match n2_work_start {
+ require: state.BootSequence == "READY"
+ message: "Call n2_coding first"
+ }
+ }
 
-  → System-level enforcement. AI cannot bypass.
+ → System-level enforcement. AI cannot bypass.
 ```
 
 **Human analogy**: "I've made this mistake 5 times → let's make it a team rule → system blocks violations."
@@ -266,12 +266,12 @@ When an insight **graduates** (importance ≥ 7, verified multiple times), Cloth
 Learning data from external sources requires cross-validation:
 
 ```
-  1 source  → unverified  (confidence: 0.3)
-  2 sources → pending     (confidence: 0.6)
-  3 sources → verified    (confidence: 0.9) ✅
-  
-  Conflict detected → flagged for user review
-  User feedback     → final verification (confidence: 1.0)
+ 1 source → unverified (confidence: 0.3)
+ 2 sources → pending (confidence: 0.6)
+ 3 sources → verified (confidence: 0.9) 
+ 
+ Conflict detected → flagged for user review
+ User feedback → final verification (confidence: 1.0)
 ```
 
 ## Memory Retrieval — How AI Accesses 100K+ Experiences
@@ -280,19 +280,19 @@ AI never sees all data. It sees only what matters, when it matters:
 
 ```
 Boot (automatic, every session):
-  → Top insights by importance (500t budget)
-  → Same 5-10 lines whether DB has 100 or 100,000 experiences
+ → Top insights by importance (500t budget)
+ → Same 5-10 lines whether DB has 100 or 100,000 experiences
 
 Work Start (automatic, per task):
-  → FTS5 search by task keywords (300t budget)
-  → "image generation" task → recalls ComfyUI experiences
+ → FTS5 search by task keywords (300t budget)
+ → "image generation" task → recalls ComfyUI experiences
 
 Manual Query (on demand):
-  → n2_mimir_overlay(topic) → natural language recall
-  → "kimchi stew recipe" → all related experiences surface
+ → n2_mimir_overlay(topic) → natural language recall
+ → "kimchi stew recipe" → all related experiences surface
 
 Everything else:
-  → Sleeps in DB → wakes up only when searched
+ → Sleeps in DB → wakes up only when searched
 ```
 
 **Result**: 100K experiences, 500 tokens at boot. Constant cost regardless of DB size.
@@ -327,11 +327,11 @@ All components are designed to scale to 100,000+ experiences without degradation
 
 ```
 At 100,000 experiences:
-  Boot time:   ~50ms (query 50 insights, not 100K experiences)
-  Recall time: ~10ms (FTS5 indexed search)
-  Digest time: ~100ms (session-scoped, not full DB)
-  Disk:        ~50MB SQLite file (compact binary format)
-  Memory:      ~5MB runtime (no full-table loads)
+ Boot time: ~50ms (query 50 insights, not 100K experiences)
+ Recall time: ~10ms (FTS5 indexed search)
+ Digest time: ~100ms (session-scoped, not full DB)
+ Disk: ~50MB SQLite file (compact binary format)
+ Memory: ~5MB runtime (no full-table loads)
 ```
 
 **Same principle as Arachne**: Arachne assembles context from 5MB+ codebases within token budgets. Mimir does the same for 50MB+ experience databases. The pattern is proven — never read everything, always extract only what matters.
@@ -342,31 +342,31 @@ Mimir and Arachne operate at different layers. Mimir **finds**, Arachne **compre
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Layer 1: Search Engine (Mimir)                      │
-│  ─────────────────────────────────────               │
-│  Query → FTS5 (keyword) + Vector (semantic)          │
-│        → BM25 ranking + cosine similarity            │
-│        → Candidates: top 50 experiences              │
-│                                                      │
-│  Tech: SQLite FTS5, Ollama nomic-embed-text          │
-│  Speed: <10ms at 100K rows (indexed)                 │
-│  Scale: millions of rows (SQLite proven)             │
+│ Layer 1: Search Engine (Mimir) │
+│ ───────────────────────────────────── │
+│ Query → FTS5 (keyword) + Vector (semantic) │
+│ → BM25 ranking + cosine similarity │
+│ → Candidates: top 50 experiences │
+│ │
+│ Tech: SQLite FTS5, Ollama nomic-embed-text │
+│ Speed: <10ms at 100K rows (indexed) │
+│ Scale: millions of rows (SQLite proven) │
 ├──────────────────────────────────────────────────────┤
-│  Layer 2: Context Compression (Arachne)              │
-│  ─────────────────────────────────────               │
-│  50 candidates → relevance scoring                   │
-│               → token budget fitting (300~500t)      │
-│               → compressed overlay assembly          │
-│                                                      │
-│  Role: fits search results into AI context window    │
-│  Same pattern as codebase context assembly           │
+│ Layer 2: Context Compression (Arachne) │
+│ ───────────────────────────────────── │
+│ 50 candidates → relevance scoring │
+│ → token budget fitting (300~500t) │
+│ → compressed overlay assembly │
+│ │
+│ Role: fits search results into AI context window │
+│ Same pattern as codebase context assembly │
 ├──────────────────────────────────────────────────────┤
-│  Layer 3: Injection (Soul)                           │
-│  ─────────────────────────────────────               │
-│  Compressed overlay → system prompt injection        │
-│                     → AI sees 5-10 lines, not 100K   │
-│                                                      │
-│  Budget: boot=500t, recall=300t, manual=configurable │
+│ Layer 3: Injection (Soul) │
+│ ───────────────────────────────────── │
+│ Compressed overlay → system prompt injection │
+│ → AI sees 5-10 lines, not 100K │
+│ │
+│ Budget: boot=500t, recall=300t, manual=configurable │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -381,10 +381,10 @@ Mimir and Arachne operate at different layers. Mimir **finds**, Arachne **compre
 ### Why This Matters at Scale
 
 ```
-At 1,000 experiences:   Mimir alone is enough (FTS5 handles it trivially)
-At 10,000 experiences:  Mimir + Arachne ensures constant token cost
+At 1,000 experiences: Mimir alone is enough (FTS5 handles it trivially)
+At 10,000 experiences: Mimir + Arachne ensures constant token cost
 At 100,000 experiences: Same architecture, same boot time (~50ms)
-At 1,000,000+:          Consider Phase 5 (vector DB separation)
+At 1,000,000+: Consider Phase 5 (vector DB separation)
 ```
 
 ### Future Scale Path (Phase 5+)
@@ -404,15 +404,15 @@ When SQLite FTS5 reaches practical limits (1M+ with heavy concurrent writes):
 Mimir data is cumulative (experiences only grow). Monthly backup is sufficient:
 
 ```
-What:   soul/data/mimir.db (single SQLite file)
-When:   Monthly (data grows slowly, not volatile)
-How:    n2_mimir_backup tool → file copy
-Where:  n2-mimir/backups/YYYY-MM/mimir.db
+What: soul/data/mimir.db (single SQLite file)
+When: Monthly (data grows slowly, not volatile)
+How: n2_mimir_backup tool → file copy
+Where: n2-mimir/backups/YYYY-MM/mimir.db
 ```
 
 ## Roadmap
 
-### Phase 1 — Core Engine ✅
+### Phase 1 — Core Engine 
 > SQLite + FTS5 experience learning
 
 - [x] SQLite + FTS5 experience storage
@@ -425,7 +425,7 @@ Where:  n2-mimir/backups/YYYY-MM/mimir.db
 - [x] Insight merging (similar insight consolidation)
 - [x] Rust core NAPI binary (win32-x64)
 
-### Phase 2 — Soul Integration ✅
+### Phase 2 — Soul Integration 
 > Native integration into Soul lifecycle
 
 - [x] `mimirActivate()` — project-based insight injection at `n2_boot` (500t)
@@ -444,15 +444,15 @@ Where:  n2-mimir/backups/YYYY-MM/mimir.db
 DB: 89 experiences, 16 insights, 852 tags
 Boot overlay: ~125 tokens (auto-optimized by merging)
 Ark contracts: 8 loaded (including StudyWorkflow)
-Rust native: ✅ 21 exports (win32-x64, Node v24, Rust 1.94)
+Rust native: 21 exports (win32-x64, Node v24, Rust 1.94)
 Ollama: nomic-embed-text (127.0.0.1:11434) — semantic search active
-Full cycle: boot → work_start → work_end → reboot ✅
-Study cycle: study_start → study_add ×3 → study_end ✅
-Auto Study: search 10 → crawl 5 → claims 56 → verified 4 (93% filter rate) ✅
+Full cycle: boot → work_start → work_end → reboot 
+Study cycle: study_start → study_add ×3 → study_end 
+Auto Study: search 10 → crawl 5 → claims 56 → verified 4 (93% filter rate) 
 Merge effect: 236t → 174t → 125t (progressive dedup)
 ```
 
-### Phase 3 — Advanced ✅
+### Phase 3 — Advanced 
 > All moved to Phase 4 or completed
 
 - [x] Semantic search — Ollama `nomic-embed-text` (Phase 2)
@@ -462,17 +462,17 @@ Merge effect: 236t → 174t → 125t (progressive dedup)
 - [x] LLM analysis → moved to Phase 4 (with Ollama pipeline)
 - [x] Distribution → separate timeline (n2-3.1-bw)
 
-### Phase 4 — Auto Study ✅
+### Phase 4 — Auto Study 
 > Fully automated web learning pipeline. Zero external dependencies.
 
 ```
 n2_mimir_auto_study(topic)
-  → DuckDuckGo HTML (built-in) → search      → 0 tokens, 0 API keys
-  → Node.js fetch + cheerio    → crawl       → 0 tokens
-  → Pattern-based extraction   → extract     → 0 tokens (no LLM required)
-  → 5-source cross-validation  → verify      → 0 tokens
-  → Contradiction detection    → flag/reject → 0 tokens
-  → Mimir DB (verified only)   → store       → 0 tokens
+ → DuckDuckGo HTML (built-in) → search → 0 tokens, 0 API keys
+ → Node.js fetch + cheerio → crawl → 0 tokens
+ → Pattern-based extraction → extract → 0 tokens (no LLM required)
+ → 5-source cross-validation → verify → 0 tokens
+ → Contradiction detection → flag/reject → 0 tokens
+ → Mimir DB (verified only) → store → 0 tokens
 ```
 
 - [x] Built-in search engine (DuckDuckGo HTML parsing, no SearXNG/API key needed)
@@ -496,24 +496,24 @@ n2_mimir_auto_study(topic)
 
 ```
 Test 1: "YouTube Shorts automation API" (technical topic)
-  Search:    10 results (3-month filter, cascading)
-  Crawl:     5 pages fetched + cleaned
-  Extract:   56 claims identified
-  Verified:  1 fact (3+ sources agree)
-  Pending:   3 facts (2 sources agree)
-  Rejected:  35 facts (insufficient evidence)
-  Saved:     4 experiences to Mimir DB
-  Filter:    93% rejection rate
+ Search: 10 results (3-month filter, cascading)
+ Crawl: 5 pages fetched + cleaned
+ Extract: 56 claims identified
+ Verified: 1 fact (3+ sources agree)
+ Pending: 3 facts (2 sources agree)
+ Rejected: 35 facts (insufficient evidence)
+ Saved: 4 experiences to Mimir DB
+ Filter: 93% rejection rate
 
 Test 2: "Gundam model painting techniques" (hobby/general topic)
-  Search:    10 results
-  Crawl:     3 pages (2 blocked by bot protection)
-  Extract:   45 claims identified
-  Verified:  0 facts
-  Pending:   1 fact
-  Rejected:  38 facts
-  Saved:     1 experience to Mimir DB
-  Filter:    98% rejection rate ← keyword matching limitation
+ Search: 10 results
+ Crawl: 3 pages (2 blocked by bot protection)
+ Extract: 45 claims identified
+ Verified: 0 facts
+ Pending: 1 fact
+ Rejected: 38 facts
+ Saved: 1 experience to Mimir DB
+ Filter: 98% rejection rate ← keyword matching limitation
 ```
 
 #### Keyword vs Semantic Verification
@@ -522,25 +522,25 @@ The verification engine uses **keyword overlap** to cluster similar claims. This
 
 ```
 Keyword matching (current default):
-  Source 1: "에어브러시로 도색한다"
-  Source 2: "airbrush painting technique"
-  Source 3: "스프레이로 칠한다"
-  → Keyword overlap: 0% → all treated as different claims ❌
-  → Actual meaning: all the same
+ Source 1: "에어브러시로 도색한다"
+ Source 2: "airbrush painting technique"
+ Source 3: "스프레이로 칠한다"
+ → Keyword overlap: 0% → all treated as different claims 
+ → Actual meaning: all the same
 
 Semantic matching (Ollama enhancement):
-  Source 1: [0.82, 0.15, 0.73, ...]  ← vector embedding
-  Source 2: [0.80, 0.17, 0.71, ...]
-  Source 3: [0.79, 0.14, 0.69, ...]
-  → Cosine similarity: 0.92 → clustered as same claim ✅
+ Source 1: [0.82, 0.15, 0.73, ...] ← vector embedding
+ Source 2: [0.80, 0.17, 0.71, ...]
+ Source 3: [0.79, 0.14, 0.69, ...]
+ → Cosine similarity: 0.92 → clustered as same claim 
 ```
 
 | Domain | Keyword Only | + Semantic (Ollama) |
 |--------|-------------|---------------------|
-| **Tech docs** (React, API) | ✅ Good (terms standardized) | ✅ Same |
-| **Multi-language** (KR+EN) | ❌ 0% match | ✅ Meaning-based |
-| **Hobby/General** (Gundam, cooking) | ❌ Low (diverse expressions) | ✅ High |
-| **News/Current events** | ⚠️ Medium | ✅ High |
+| **Tech docs** (React, API) | Good (terms standardized) | Same |
+| **Multi-language** (KR+EN) | 0% match | Meaning-based |
+| **Hobby/General** (Gundam, cooking) | Low (diverse expressions) | High |
+| **News/Current events** | Medium | High |
 
 #### A/B Test: Keyword vs Semantic (2026-03-24)
 
@@ -549,15 +549,15 @@ Same topic, same search results — only verification mode changed:
 ```
 Topic: "Gundam model painting techniques" (hobby/general)
 
-                 Keyword Only    Semantic Hybrid    Δ
-Search results:  10              10                 —
-Pages crawled:   3               4                  +1
-Claims extracted:45              55                 +10
-Verified (3+):   0               1                  +1 🔥 (from nothing!)
-Pending (2):     1               1                  —
-Rejected:        38              34                 -4 (rescued)
-Saved to DB:     1               2                  +100% 🔥
-Rejection rate:  98%             93%                -5%
+ Keyword Only Semantic Hybrid Δ
+Search results: 10 10 —
+Pages crawled: 3 4 +1
+Claims extracted:45 55 +10
+Verified (3+): 0 1 +1 (from nothing!)
+Pending (2): 1 1 —
+Rejected: 38 34 -4 (rescued)
+Saved to DB: 1 2 +100% 
+Rejection rate: 98% 93% -5%
 ```
 
 > **Conclusion**: For general/hobby topics, semantic hybrid mode **doubles** the saved experiences by understanding that diverse expressions like "airbrush painting" ≈ "spray painting" are the same claim, even across languages. For tech docs, the difference is minimal since terminology is already standardized.
@@ -572,9 +572,9 @@ Rejection rate:  98%             93%                -5%
 
 > **Design principle**: keyword-only is the baseline (works standalone, 0 cost). Ollama adds intelligence when available, but is never required. Cloud AI tokens are only spent on the initial MCP tool call (~20t), the entire pipeline runs server-side at zero token cost.
 
-## 📦 Installation
+## Installation
 
-> 💡 **Pro tip**: Just ask your AI agent: *"Install n2-mimir for me."* It knows what to do. 🧠
+> **Pro tip**: Just ask your AI agent: *"Install n2-mimir for me."* It knows what to do. 
 
 ```bash
 npm install n2-mimir
@@ -598,34 +598,34 @@ Mimir integrates via Soul — no separate MCP server needed:
 
 ```json
 {
-  "mcpServers": {
-    "n2-soul": {
-      "command": "node",
-      "args": ["/path/to/n2-soul/index.js"]
-    }
-  }
+ "mcpServers": {
+ "n2-soul": {
+ "command": "node",
+ "args": ["/path/to/n2-soul/index.js"]
+ }
+ }
 }
 ```
 
 > Mimir is loaded automatically by Soul at boot. Configure in `soul/lib/config.js`.
 
-## 🔧 Configuration
+## Configuration
 
 Create or update `config.local.js` in the Soul directory:
 
 ```javascript
 module.exports = {
-    MIMIR: {
-        tokenBudget: 500,          // Max tokens for experience overlay
-        halfLife: 14,              // Importance decay half-life (days)
+ MIMIR: {
+ tokenBudget: 500, // Max tokens for experience overlay
+ halfLife: 14, // Importance decay half-life (days)
 
-        // Enable semantic search (requires Ollama)
-        llm: {
-            provider: 'ollama',
-            model: 'nomic-embed-text',
-            endpoint: 'http://localhost:11434',
-        },
-    },
+ // Enable semantic search (requires Ollama)
+ llm: {
+ provider: 'ollama',
+ model: 'nomic-embed-text',
+ endpoint: 'http://localhost:11434',
+ },
+ },
 };
 ```
 
@@ -640,23 +640,23 @@ const mimir = new Mimir({ dbPath: './mimir.db' });
 
 // Add experience — agent/project are optional (default: 'default')
 mimir.addExperience({
-  type: 'correction',
-  category: 'workflow',
-  context: 'Terminal work',
-  action: 'Used special character in directory name',
-  outcome: 'Terminal commands all hung',
-  correction: 'Use only [a-z0-9-] for directory names',
+ type: 'correction',
+ category: 'workflow',
+ context: 'Terminal work',
+ action: 'Used special character in directory name',
+ outcome: 'Terminal commands all hung',
+ correction: 'Use only [a-z0-9-] for directory names',
 });
 
 // Or specify agent/project for multi-agent setups
 mimir.addExperience({
-  agent: 'rose',
-  project: 'my-project',
-  type: 'success',
-  category: 'coding',
-  context: 'React optimization',
-  action: 'Used React.memo on list items',
-  outcome: 'Render time reduced by 60%',
+ agent: 'rose',
+ project: 'my-project',
+ type: 'success',
+ category: 'coding',
+ context: 'React optimization',
+ action: 'Used React.memo on list items',
+ outcome: 'Render time reduced by 60%',
 });
 
 // Recall relevant experiences
@@ -682,7 +682,7 @@ mimir.close();
 // Configure in soul/lib/config.js — no extra code needed.
 ```
 
-## 📚 API Reference
+## API Reference
 
 ### Experience Collection
 
@@ -730,7 +730,7 @@ mimir.close();
 | `getStats()` | `{ experiences, insights, tags }` |
 | `close()` | Close database |
 
-## 🚀 MCP Tools
+## MCP Tools
 
 Mimir registers these tools via Soul:
 
@@ -750,80 +750,80 @@ Mimir registers these tools via Soul:
 ```
 n2_mimir_auto_study(topic: "React Server Components")
 
-📖 Auto Study complete: "React Server Components"
-  🔧 Mode: 🧠 hybrid (keyword+semantic)
-  🔍 Search results: 10
-  📄 Pages crawled: 5
-  📝 Claims extracted: 56
-  ✅ Verified facts (3+ sources): 4
-  💾 Experiences saved: 4
+ Auto Study complete: "React Server Components"
+ Mode: hybrid (keyword+semantic)
+ Search results: 10
+ Pages crawled: 5
+ Claims extracted: 56
+ Verified facts (3+ sources): 4
+ Experiences saved: 4
 ```
 
 > One tool call (~20 tokens). The entire pipeline runs server-side at zero token cost.
 
-## 🌐 N2 Ecosystem — Better Together
+## N2 Ecosystem — Better Together
 
 | Package | Role | npm | Standalone |
 |---------|------|-----|:----------:|
-| **QLN** | Tool routing (1000+ tools → 1 router) | `n2-qln` | ✅ |
-| **Soul** | Agent memory & session management | `n2-soul` | ✅ |
-| **Ark** | Security policies & code verification | `n2-ark` | ✅ |
-| **Arachne** | Code context auto-assembly | `n2-arachne` | ✅ |
-| **Mimir** | Experience learning engine 🧠 | `n2-mimir` | ✅ |
-| **Clotho** | Auto rule generation from insights 🧵 | `n2-clotho` | ✅ |
+| **QLN** | Tool routing (1000+ tools → 1 router) | `n2-qln` | Yes |
+| **Soul** | Agent memory & session management | `n2-soul` | Yes |
+| **Ark** | Security policies & code verification | `n2-ark` | Yes |
+| **Arachne** | Code context auto-assembly | `n2-arachne` | Yes |
+| **Mimir** | Experience learning engine | `n2-mimir` | Yes |
+| **Clotho** | Auto rule generation from insights | `n2-clotho` | Yes |
 
 > Every package works **100% standalone**. But when combined, magic happens.
 
-### 🔗 Synergy: The Self-Improving Loop
+### Synergy: The Self-Improving Loop
 
 ```
 User works with AI
-     │
-     ▼
+ │
+ ▼
 ┌─── Soul (Memory) ──────────────────────────────────┐
-│ Tracks sessions, handoffs, decisions               │
-│ → Triggers Mimir at work_start (recall)            │
-│ → Triggers Mimir at work_end (digest)              │
+│ Tracks sessions, handoffs, decisions │
+│ → Triggers Mimir at work_start (recall) │
+│ → Triggers Mimir at work_end (digest) │
 └────────────────┬───────────────────────────────────┘
-                 │
-                 ▼
+ │
+ ▼
 ┌─── Mimir (Learning) ───────────────────────────────┐
-│ Collects experiences → generates insights          │
-│ → Insights graduate at importance 30+              │
-│ → Graduated insights → Clotho                      │
+│ Collects experiences → generates insights │
+│ → Insights graduate at importance 30+ │
+│ → Graduated insights → Clotho │
 └────────────────┬───────────────────────────────────┘
-                 │
-                 ▼
+ │
+ ▼
 ┌─── Clotho (Auto-Rules) ────────────────────────────┐
-│ Graduated insights → .n2 rule files (0 tokens)     │
-│ → Rules loaded by Ark at boot                      │
+│ Graduated insights → .n2 rule files (0 tokens) │
+│ → Rules loaded by Ark at boot │
 └────────────────┬───────────────────────────────────┘
-                 │
-                 ▼
+ │
+ ▼
 ┌─── Ark (Enforcement) ──────────────────────────────┐
-│ State machine: compiles .n2 → blocks violations    │
-│ → System-level enforcement, AI can't bypass        │
-│ → Loop repeats: more work → smarter rules          │
+│ State machine: compiles .n2 → blocks violations │
+│ → System-level enforcement, AI can't bypass │
+│ → Loop repeats: more work → smarter rules │
 └────────────────────────────────────────────────────┘
 ```
 
-### 🕸️ Arachne + Mimir: Code × Experience
+### Arachne + Mimir: Code × Experience
 
 Arachne finds the right code. Mimir recalls past experience. Together, AI gets both **context** and **wisdom**.
 
 ```
 User: "Fix the database timeout bug"
-     │
-     ├──→ 🕸️ Arachne                    🧠 Mimir
-     │    "Here are the 4 relevant        "Last time you fixed a timeout,
-     │     files from 3,219 in your        you increased the pool size
-     │     project (30K tokens)"           from 5 to 20. That worked."
-     │         │                                │
-     └─────────┴────────────────────────────────┘
-                        │
-                        ▼
-               AI generates precise fix
-               with historical context ✅
+ │
+ ├──→ Arachne Mimir
+ │ "Here are the 4 relevant "Last time you fixed a timeout,
+ │ files from 3,219 in your you increased the pool size
+ │ project (30K tokens)" from 5 to 20. That worked."
+ │ │ │
+ └─────────┴────────────────────────────────┘
+ │
+ ▼
+ AI generates precise fix
+ with historical context 
 ```
 
 | Without Mimir | With Mimir |
@@ -832,7 +832,7 @@ User: "Fix the database timeout bug"
 | May repeat a fix that already failed | Avoids known-bad approaches |
 | No learning across sessions | Learns and improves every session |
 
-> 💡 **Setup**: Both are loaded via Soul. No extra config needed — they auto-detect each other.
+> **Setup**: Both are loaded via Soul. No extra config needed — they auto-detect each other.
 
 ## Changelog
 
@@ -884,7 +884,7 @@ User: "Fix the database timeout bug"
 - Rust NAPI binary (win32-x64)
 - Soul CJS build + better-sqlite3 fallback
 
-## 📄 License
+## License
 
 This project is **dual-licensed**:
 
@@ -896,14 +896,14 @@ This project is **dual-licensed**:
 
 See [LICENSE](./LICENSE) for full details.
 
-## 💖 Sponsors
+## Sponsors
 
-No coffee? A star is fine too ☕→⭐
+If Mimir helped you, a star would be appreciated.
 
 > Become a sponsor → [GitHub Sponsors](https://github.com/sponsors/choihyunsus)
 
 ---
 
-🌐 [nton2.com](https://nton2.com) · 📦 [npm](https://www.npmjs.com/package/n2-mimir) · 📧 lagi0730@gmail.com
+[nton2.com](https://nton2.com) · [npm](https://www.npmjs.com/package/n2-mimir) · lagi0730@gmail.com
 
-*Mimir — the guardian of wisdom. Your AI, learning from experience.* 🧠
+*Mimir — the guardian of wisdom. Your AI, learning from experience.* 
